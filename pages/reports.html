@@ -1,0 +1,338 @@
+<!--
+  pages/reports.html
+  Modul: Pelaporan & Analitik (Gabungan)
+  • Bagian A (Requests):
+    1. Jumlah Permintaan per Status
+    2. Total Kuantitas Material yang Diminta
+    • Data via JSONP: getRequests, getRequestItems, getMaterials
+
+  • Bagian B (Stock & Consumption):
+    1. Dashboard Ringkasan Stok per Lokasi
+    2. Laporan Pengeluaran per Proyek
+    • Data via JSONP: getReportStockSummary, getReportConsumptionByProject
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pelaporan & Analitik</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+
+  <style>
+    /* Highlight jumlah item kritis (warna merah tebal) */
+    .critical-cell {
+      color: #c82333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipts.html">Penerimaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="issues.html">Pengeluaran</a></li>
+          <li class="nav-item"><a class="nav-link" href="adjustments.html">Penyesuaian</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="reports.html">Laporan</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Pelaporan & Analitik</h3>
+    <hr />
+
+    <!-- ===== Bagian A: Laporan Requests ===== -->
+    <div class="mb-5">
+      <h5>A. Laporan Permintaan</h5>
+
+      <!-- A1. Jumlah Permintaan per Status -->
+      <div class="mb-4">
+        <h6>1. Jumlah Permintaan per Status</h6>
+        <div class="table-responsive w-50">
+          <table class="table table-bordered" id="tblReqByStatus">
+            <thead class="table-light">
+              <tr>
+                <th>Status</th>
+                <th>Jumlah</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data akan di‐render lewat JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- A2. Total Kuantitas Material yang Diminta -->
+      <div>
+        <h6>2. Total Kuantitas Material yang Diminta (Keseluruhan)</h6>
+        <div class="table-responsive w-75">
+          <table class="table table-bordered" id="tblQtyPerMaterial">
+            <thead class="table-light">
+              <tr>
+                <th>Material</th>
+                <th>Total Quantity Diminta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data akan di‐render lewat JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- ===== Bagian B: Laporan Stock & Consumption ===== -->
+    <div>
+      <h5>B. Laporan Stok & Pengeluaran</h5>
+
+      <!-- B1. Dashboard Ringkasan Stok per Lokasi -->
+      <div class="mb-5">
+        <h6>1. Dashboard Ringkasan Stok per Lokasi</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered" id="tblReportStockSummary">
+            <thead class="table-dark">
+              <tr>
+                <th>Lokasi</th>
+                <th>Total Item</th>
+                <th>Total Nilai (Rp)</th>
+                <th>Item Kritis (≤ Minimum Stock)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data akan di‐render lewat JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- B2. Laporan Pengeluaran per Proyek -->
+      <div>
+        <h6>2. Laporan Pengeluaran per Proyek</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered" id="tblReportConsumptionByProject">
+            <thead class="table-dark">
+              <tr>
+                <th>Proyek</th>
+                <th>Total Kuantitas</th>
+                <th>Total Nilai (Rp)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data akan di‐render lewat JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip Gabungan untuk Reports -->
+  <script>
+    // ----------------------------------------
+    // Bagian A: Data Requests & RequestItems
+    // ----------------------------------------
+    var allRequests     = [];
+    var allRequestItems = [];
+    var allMaterials    = [];
+
+    /**
+     * Render tabel "Jumlah Permintaan per Status"
+     */
+    function renderReqByStatus() {
+      var tbody = document.querySelector('#tblReqByStatus tbody');
+      tbody.innerHTML = '';
+      var counts = {};
+      allRequests.forEach(function(r) {
+        var st = r.status || 'Unknown';
+        counts[st] = (counts[st] || 0) + 1;
+      });
+      if (Object.keys(counts).length === 0) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="2" class="text-center">Tidak ada data</td>';
+        tbody.appendChild(tr);
+      } else {
+        Object.keys(counts).forEach(function(st) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + st + '</td><td>' + counts[st] + '</td>';
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    /**
+     * Render tabel "Total Kuantitas Material yang Diminta"
+     */
+    function renderQtyPerMaterial() {
+      var tbody = document.querySelector('#tblQtyPerMaterial tbody');
+      tbody.innerHTML = '';
+      var sumByMat = {};
+      allRequestItems.forEach(function(item) {
+        var mid = item.material_id;
+        var q   = parseFloat(item.quantity) || 0;
+        sumByMat[mid] = (sumByMat[mid] || 0) + q;
+      });
+      if (Object.keys(sumByMat).length === 0) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="2" class="text-center">Tidak ada data</td>';
+        tbody.appendChild(tr);
+      } else {
+        Object.keys(sumByMat).forEach(function(mid) {
+          var matObj = allMaterials.find(m => m.id == mid) || { name: 'Unknown' };
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + matObj.name + '</td>' +
+            '<td>' + sumByMat[mid] + '</td>';
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    /**
+     * Load data A: Materials, RequestItems, Requests, lalu render bagian A
+     */
+    function loadReportRequests() {
+      fetchJSONP('getMaterials', function(resM) {
+        if (resM.status === 'success') {
+          allMaterials = resM.data;
+          fetchJSONP('getRequestItems', function(resI) {
+            if (resI.status === 'success') {
+              allRequestItems = resI.data;
+              fetchJSONP('getRequests', function(resR) {
+                if (resR.status === 'success') {
+                  allRequests = resR.data;
+                  renderReqByStatus();
+                  renderQtyPerMaterial();
+                } else {
+                  showAlert('danger', 'Gagal muat data Requests: ' + resR.message);
+                }
+              });
+            } else {
+              showAlert('danger', 'Gagal muat data RequestItems: ' + resI.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data Materials: ' + resM.message);
+        }
+      });
+    }
+
+    // ----------------------------------------
+    // Bagian B: Stock Summary & Consumption
+    // ----------------------------------------
+
+    /**
+     * Render tabel Dashboard Ringkasan Stok per Lokasi
+     * @param {Array} data  – array objek { location_id, location_name, total_items, total_value, critical_items }
+     */
+    function renderReportStockSummary(data) {
+      var tbody = document.querySelector('#tblReportStockSummary tbody');
+      tbody.innerHTML = '';
+      data.forEach(function(row) {
+        var criticalClass = row.critical_items > 0 ? 'critical-cell' : '';
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.location_name}</td>
+          <td>${row.total_items}</td>
+          <td>${row.total_value.toLocaleString('id-ID')}</td>
+          <td class="${criticalClass}">${row.critical_items}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /**
+     * Render tabel Laporan Pengeluaran per Proyek
+     * @param {Array} data  – array objek { project_id, project_name, total_quantity, total_value }
+     */
+    function renderReportConsumptionByProject(data) {
+      var tbody = document.querySelector('#tblReportConsumptionByProject tbody');
+      tbody.innerHTML = '';
+      data.forEach(function(row) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.project_name}</td>
+          <td>${row.total_quantity}</td>
+          <td>${row.total_value.toLocaleString('id-ID')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /**
+     * Load data B: Stock Summary & Consumption per Project, lalu render bagian B
+     */
+    function loadReportStockAndConsumption() {
+      fetchJSONP('getReportStockSummary', function(resS) {
+        if (resS.status === 'success') {
+          renderReportStockSummary(resS.data);
+        } else {
+          showAlert('danger', 'Gagal muat Laporan Stok: ' + resS.message);
+        }
+      });
+      fetchJSONP('getReportConsumptionByProject', function(resP) {
+        if (resP.status === 'success') {
+          renderReportConsumptionByProject(resP.data);
+        } else {
+          showAlert('danger', 'Gagal muat Laporan Pengeluaran per Proyek: ' + resP.message);
+        }
+      });
+    }
+
+    // ----------------------------------------
+    // Inisialisasi saat halaman dimuat
+    // ----------------------------------------
+    document.addEventListener('DOMContentLoaded', function() {
+      // Muat Bagian A
+      loadReportRequests();
+      // Muat Bagian B
+      loadReportStockAndConsumption();
+    });
+  </script>
+</body>
+</html>

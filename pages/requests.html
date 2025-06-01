@@ -1,0 +1,431 @@
+<!--
+  pages/requests.html
+  Modul: Header Permintaan (Requests)
+  • GET via JSONP: getRequests, getProjects
+  • POST via no-cors: addRequest, updateRequest, deleteRequest
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Permintaan Material</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="requests.html">Permintaan</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Daftar Permintaan Material</h3>
+    <hr />
+
+    <!-- Tombol Tambah Permintaan -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddRequest">
+      <i class="bi bi-plus-circle"></i> Tambah Permintaan
+    </button>
+
+    <!-- Tabel Daftar Requests -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblRequests">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Kode</th>
+            <th>Proyek</th>
+            <th>Tanggal</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Request -->
+  <div class="modal fade" id="modalAddRequest" tabindex="-1" aria-labelledby="modalAddRequestLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddRequest">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddRequestLabel">Tambah Permintaan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="addRequestCode" class="form-label">Kode Permintaan</label>
+                <input type="text" class="form-control" id="addRequestCode" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addRequestProject" class="form-label">Proyek</label>
+                <select class="form-select" id="addRequestProject" required>
+                  <option value="">-- Pilih Proyek --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="addRequestDate" class="form-label">Tanggal Permintaan</label>
+                <input type="date" class="form-control" id="addRequestDate" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addRequestStatus" class="form-label">Status</label>
+                <select class="form-select" id="addRequestStatus" required>
+                  <option value="Pending">Pending</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Request -->
+  <div class="modal fade" id="modalEditRequest" tabindex="-1" aria-labelledby="modalEditRequestLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditRequest">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditRequestLabel">Edit Permintaan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editRequestId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="editRequestCode" class="form-label">Kode Permintaan</label>
+                <input type="text" class="form-control" id="editRequestCode" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editRequestProject" class="form-label">Proyek</label>
+                <select class="form-select" id="editRequestProject" required>
+                  <option value="">-- Pilih Proyek --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editRequestDate" class="form-label">Tanggal Permintaan</label>
+                <input type="date" class="form-control" id="editRequestDate" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editRequestStatus" class="form-label">Status</label>
+                <select class="form-select" id="editRequestStatus" required>
+                  <option value="Pending">Pending</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Requests -->
+  <script>
+    var requestsData = [];
+    var projectsForRequest = [];
+
+    /**
+     * Isi dropdown Proyek di modal Add/Edit
+     */
+    function populateRequestProjects() {
+      var addSel = document.getElementById('addRequestProject');
+      var editSel = document.getElementById('editRequestProject');
+      addSel.innerHTML = '<option value="">-- Pilih Proyek --</option>';
+      editSel.innerHTML = '<option value="">-- Pilih Proyek --</option>';
+      projectsForRequest.forEach(function(pr) {
+        var opt1 = document.createElement('option');
+        opt1.value = pr.id;
+        opt1.text = pr.name;
+        addSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel Requests
+     */
+    function renderRequestsTable() {
+      var tbody = document.querySelector('#tblRequests tbody');
+      tbody.innerHTML = '';
+      requestsData.forEach(function(req) {
+        // Cari nama proyek dari ID
+        var prObj = projectsForRequest.find(p => p.id == req.project_id) || { name: '-' };
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${req.id}</td>
+          <td>${req.request_code}</td>
+          <td>${prObj.name}</td>
+          <td>${req.request_date}</td>
+          <td>${req.status}</td>
+          <td>${req.created_at}</td>
+          <td>
+            <button class="btn btn-sm btn-info me-1 btn-items-request" data-id="${req.id}">
+              <i class="bi bi-card-list"></i> Items
+            </button>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-request"
+              data-id="${req.id}"
+              data-code="${req.request_code}"
+              data-project="${req.project_id}"
+              data-date="${req.request_date}"
+              data-status="${req.status}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-request" data-id="${req.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Tombol “Items” → pindah ke request‐items.html?request_id=…
+      document.querySelectorAll('.btn-items-request').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          // Buka halaman request‐items.html untuk request ini
+          window.location.href = 'request-items.html?request_id=' + id;
+        });
+      });
+
+      // Tombol Edit
+      document.querySelectorAll('.btn-edit-request').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var code = this.getAttribute('data-code');
+          var projId = this.getAttribute('data-project');
+          var date = this.getAttribute('data-date');
+          var status = this.getAttribute('data-status');
+          document.getElementById('editRequestId').value = id;
+          document.getElementById('editRequestCode').value = code;
+          document.getElementById('editRequestDate').value = date;
+          document.getElementById('editRequestStatus').value = status;
+          // Pastikan dropdown Proyek sudah terisi
+          populateRequestProjects();
+          document.getElementById('editRequestProject').value = projId;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditRequest'));
+          editModal.show();
+        });
+      });
+
+      // Tombol Delete
+      document.querySelectorAll('.btn-delete-request').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus permintaan ini?')) {
+            deleteRequest(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Projects (untuk dropdown) lalu Requests
+     */
+    function loadRequestsAndProjects() {
+      // 1. GET Projects
+      fetchJSONP('getProjects', function(resP) {
+        if (resP.status === 'success') {
+          projectsForRequest = resP.data;
+          populateRequestProjects();
+          // 2. GET Requests
+          fetchJSONP('getRequests', function(resR) {
+            if (resR.status === 'success') {
+              requestsData = resR.data;
+              renderRequestsTable();
+            } else {
+              showAlert('danger', 'Gagal muat data Requests: ' + resR.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data Projects: ' + resP.message);
+        }
+      });
+    }
+
+    /**
+     * Tambah Request via no-CORS POST
+     */
+    function addRequestFunc() {
+      var code = document.getElementById('addRequestCode').value.trim();
+      var projId = document.getElementById('addRequestProject').value;
+      var date = document.getElementById('addRequestDate').value;
+      var status = document.getElementById('addRequestStatus').value;
+      if (code && projId && date && status) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addRequest',
+            payload: {
+              request_code: code,
+              project_id: projId,
+              request_date: date,
+              status: status
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Permintaan berhasil ditambahkan (server processing).');
+          setTimeout(loadRequestsAndProjects, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Update Request via no-CORS POST
+     */
+    function updateRequestFunc() {
+      var id = document.getElementById('editRequestId').value;
+      var code = document.getElementById('editRequestCode').value.trim();
+      var projId = document.getElementById('editRequestProject').value;
+      var date = document.getElementById('editRequestDate').value;
+      var status = document.getElementById('editRequestStatus').value;
+      if (id && code && projId && date && status) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateRequest',
+            payload: {
+              id: id,
+              request_code: code,
+              project_id: projId,
+              request_date: date,
+              status: status
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Permintaan berhasil diupdate (server processing).');
+          setTimeout(loadRequestsAndProjects, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Delete Request via no-CORS POST
+     */
+    function deleteRequest(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteRequest',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Permintaan berhasil dihapus (server processing).');
+        setTimeout(loadRequestsAndProjects, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    // Event Binding saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+      loadRequestsAndProjects();
+
+      // Saat modal Add muncul, reset field
+      document.getElementById('modalAddRequest').addEventListener('show.bs.modal', function() {
+        document.getElementById('addRequestCode').value = '';
+        document.getElementById('addRequestDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('addRequestStatus').value = 'Pending';
+        populateRequestProjects();
+      });
+
+      // Form Tambah Request
+      document.getElementById('formAddRequest').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addRequestFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddRequest'));
+        addModal.hide();
+      });
+
+      // Form Edit Request
+      document.getElementById('formEditRequest').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateRequestFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditRequest'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>

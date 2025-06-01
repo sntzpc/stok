@@ -1,0 +1,363 @@
+<!--
+  pages/master-pricedata.html
+  Modul: Master Data PriceData
+  • GET via JSONP: getPriceData, getMaterials
+  • POST via no-cors: addPriceData, updatePriceData, deletePriceData
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Master Data - PriceData</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Master Data - PriceData</h3>
+    <hr />
+
+    <!-- Tombol Tambah PriceData Baru -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddPrice">
+      <i class="bi bi-plus-circle"></i> Tambah PriceData
+    </button>
+
+    <!-- Tabel Daftar PriceData -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblPriceData">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Material</th>
+            <th>Harga Estimasi</th>
+            <th>Tanggal Efektif</th>
+            <th>Created At</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Akan diisi lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah PriceData -->
+  <div class="modal fade" id="modalAddPrice" tabindex="-1" aria-labelledby="modalAddPriceLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formAddPrice">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddPriceLabel">Tambah PriceData</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="addPriceMaterial" class="form-label">Material</label>
+              <select class="form-select" id="addPriceMaterial" required>
+                <option value="">-- Pilih Material --</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="addPriceEstimate" class="form-label">Harga Estimasi</label>
+              <input type="number" step="0.01" class="form-control" id="addPriceEstimate" required />
+            </div>
+            <div class="mb-3">
+              <label for="addPriceEffectiveDate" class="form-label">Tanggal Efektif</label>
+              <input type="date" class="form-control" id="addPriceEffectiveDate" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit PriceData -->
+  <div class="modal fade" id="modalEditPrice" tabindex="-1" aria-labelledby="modalEditPriceLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEditPrice">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditPriceLabel">Edit PriceData</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editPriceId" />
+            <div class="mb-3">
+              <label for="editPriceMaterial" class="form-label">Material</label>
+              <select class="form-select" id="editPriceMaterial" required>
+                <option value="">-- Pilih Material --</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editPriceEstimate" class="form-label">Harga Estimasi</label>
+              <input type="number" step="0.01" class="form-control" id="editPriceEstimate" required />
+            </div>
+            <div class="mb-3">
+              <label for="editPriceEffectiveDate" class="form-label">Tanggal Efektif</label>
+              <input type="date" class="form-control" id="editPriceEffectiveDate" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman PriceData -->
+  <script>
+    var materialsForPrice = [];
+    var priceData = [];
+
+    function populatePriceMaterialDropdown() {
+      // Isi dropdown tambah
+      var addSel = document.getElementById('addPriceMaterial');
+      var editSel = document.getElementById('editPriceMaterial');
+      addSel.innerHTML = '<option value="">-- Pilih Material --</option>';
+      editSel.innerHTML = '<option value="">-- Pilih Material --</option>';
+      materialsForPrice.forEach(function(mat) {
+        var opt1 = document.createElement('option');
+        opt1.value = mat.id;
+        opt1.text = mat.name;
+        addSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editSel.appendChild(opt2);
+      });
+    }
+
+    function renderPriceTable() {
+      var tbody = document.querySelector('#tblPriceData tbody');
+      tbody.innerHTML = '';
+      priceData.forEach(function(pd) {
+        // Cari nama material
+        var matObj = materialsForPrice.find(m => m.id == pd.material_id) || { name: '-' };
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${pd.id}</td>
+          <td>${matObj.name}</td>
+          <td>${pd.price_estimate}</td>
+          <td>${pd.effective_date}</td>
+          <td>${pd.created_at}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-price"
+              data-id="${pd.id}"
+              data-material="${pd.material_id}"
+              data-price="${pd.price_estimate}"
+              data-date="${pd.effective_date}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-price" data-id="${pd.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll('.btn-edit-price').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var matId = this.getAttribute('data-material');
+          var price = this.getAttribute('data-price');
+          var date = this.getAttribute('data-date');
+          document.getElementById('editPriceId').value = id;
+          document.getElementById('editPriceMaterial').value = matId;
+          document.getElementById('editPriceEstimate').value = price;
+          document.getElementById('editPriceEffectiveDate').value = date;
+          populatePriceMaterialDropdown();
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditPrice'));
+          editModal.show();
+        });
+      });
+      document.querySelectorAll('.btn-delete-price').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus PriceData ini?')) {
+            deletePriceData(id);
+          }
+        });
+      });
+    }
+
+    function loadPriceDataAndMaterials() {
+      // 1. Baca semua Material (untuk dropdown)
+      fetchJSONP('getMaterials', function(resM) {
+        if (resM.status === 'success') {
+          materialsForPrice = resM.data;
+          populatePriceMaterialDropdown();
+          // 2. Baca PriceData
+          fetchJSONP('getPriceData', function(resP) {
+            if (resP.status === 'success') {
+              priceData = resP.data;
+              renderPriceTable();
+            } else {
+              showAlert('danger', 'Gagal muat data PriceData: ' + resP.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data material: ' + resM.message);
+        }
+      });
+    }
+
+    function addPriceData() {
+      var matId = document.getElementById('addPriceMaterial').value;
+      var price = document.getElementById('addPriceEstimate').value;
+      var date = document.getElementById('addPriceEffectiveDate').value;
+      if (matId && price && date) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addPriceData',
+            payload: {
+              material_id: matId,
+              price_estimate: parseFloat(price),
+              effective_date: date
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'PriceData berhasil ditambahkan (server processing).');
+          setTimeout(loadPriceDataAndMaterials, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    function updatePriceDataFunc() {
+      var id = document.getElementById('editPriceId').value;
+      var matId = document.getElementById('editPriceMaterial').value;
+      var price = document.getElementById('editPriceEstimate').value;
+      var date = document.getElementById('editPriceEffectiveDate').value;
+      if (id && matId && price && date) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updatePriceData',
+            payload: {
+              id: id,
+              price_estimate: parseFloat(price),
+              effective_date: date
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'PriceData berhasil diupdate (server processing).');
+          setTimeout(loadPriceDataAndMaterials, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    function deletePriceData(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deletePriceData',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'PriceData berhasil dihapus (server processing).');
+        setTimeout(loadPriceDataAndMaterials, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPriceDataAndMaterials();
+
+      // Saat modal Add muncul, reset field
+      document.getElementById('modalAddPrice').addEventListener('show.bs.modal', function() {
+        document.getElementById('addPriceEstimate').value = '';
+        document.getElementById('addPriceEffectiveDate').value = '';
+        populatePriceMaterialDropdown();
+      });
+
+      document.getElementById('formAddPrice').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addPriceData();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddPrice'));
+        addModal.hide();
+      });
+
+      document.getElementById('formEditPrice').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updatePriceDataFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditPrice'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>

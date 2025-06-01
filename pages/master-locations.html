@@ -1,0 +1,266 @@
+<!--
+  pages/master-locations.html
+  Modul: Master Data Lokasi
+  • GET via JSONP: getLocations
+  • POST via no-cors: addLocation, updateLocation, deleteLocation
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Master Data - Lokasi</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Master Data - Lokasi</h3>
+    <hr />
+
+    <!-- Tombol Tambah Baru -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddLocation">
+      <i class="bi bi-plus-circle"></i> Tambah Lokasi
+    </button>
+
+    <!-- Tabel Daftar Lokasi -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblLocations">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Nama Lokasi</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Akan diisi lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Lokasi -->
+  <div class="modal fade" id="modalAddLocation" tabindex="-1" aria-labelledby="modalAddLocationLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formAddLocation">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddLocationLabel">Tambah Lokasi</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="addLocationName" class="form-label">Nama Lokasi</label>
+              <input type="text" class="form-control" id="addLocationName" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Lokasi -->
+  <div class="modal fade" id="modalEditLocation" tabindex="-1" aria-labelledby="modalEditLocationLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEditLocation">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditLocationLabel">Edit Lokasi</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editLocationId" />
+            <div class="mb-3">
+              <label for="editLocationName" class="form-label">Nama Lokasi</label>
+              <input type="text" class="form-control" id="editLocationName" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Master Lokasi -->
+  <script>
+    var locationsData = [];
+
+    function renderLocationsTable() {
+      var tbody = document.querySelector('#tblLocations tbody');
+      tbody.innerHTML = '';
+      locationsData.forEach(function(loc) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${loc.id}</td>
+          <td>${loc.name}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-location" data-id="${loc.id}" data-name="${loc.name}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-location" data-id="${loc.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll('.btn-edit-location').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var name = this.getAttribute('data-name');
+          document.getElementById('editLocationId').value = id;
+          document.getElementById('editLocationName').value = name;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditLocation'));
+          editModal.show();
+        });
+      });
+      document.querySelectorAll('.btn-delete-location').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus lokasi ini?')) {
+            deleteLocation(id);
+          }
+        });
+      });
+    }
+
+    function loadLocations() {
+      fetchJSONP('getLocations', function(res) {
+        if (res.status === 'success') {
+          locationsData = res.data;
+          renderLocationsTable();
+        } else {
+          showAlert('danger', 'Gagal muat data lokasi: ' + res.message);
+        }
+      });
+    }
+
+    function addLocation(name) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'addLocation', payload: { name: name } })
+      })
+      .then(function() {
+        showAlert('success', 'Lokasi berhasil ditambahkan (server processing).');
+        setTimeout(loadLocations, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    function updateLocation(id, name) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateLocation', payload: { id: id, name: name } })
+      })
+      .then(function() {
+        showAlert('success', 'Lokasi berhasil diupdate (server processing).');
+        setTimeout(loadLocations, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    function deleteLocation(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteLocation', payload: { id: id } })
+      })
+      .then(function() {
+        showAlert('success', 'Lokasi berhasil dihapus (server processing).');
+        setTimeout(loadLocations, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadLocations();
+
+      document.getElementById('formAddLocation').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var name = document.getElementById('addLocationName').value.trim();
+        if (name) {
+          addLocation(name);
+          document.getElementById('addLocationName').value = '';
+          var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddLocation'));
+          addModal.hide();
+        }
+      });
+
+      document.getElementById('formEditLocation').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = document.getElementById('editLocationId').value;
+        var name = document.getElementById('editLocationName').value.trim();
+        if (id && name) {
+          updateLocation(id, name);
+          var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditLocation'));
+          editModal.hide();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

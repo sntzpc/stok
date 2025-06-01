@@ -1,0 +1,266 @@
+<!--
+  pages/master-units.html
+  Modul: Master Data Unit
+  • GET via JSONP: getUnits
+  • POST via no-cors: addUnit, updateUnit, deleteUnit
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Master Data - Unit</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Master Data - Unit</h3>
+    <hr />
+
+    <!-- Tombol Tambah Baru -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddUnit">
+      <i class="bi bi-plus-circle"></i> Tambah Unit
+    </button>
+
+    <!-- Tabel Daftar Unit -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblUnits">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Nama Unit</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Akan diisi lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Unit -->
+  <div class="modal fade" id="modalAddUnit" tabindex="-1" aria-labelledby="modalAddUnitLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formAddUnit">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddUnitLabel">Tambah Unit</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="addUnitName" class="form-label">Nama Unit</label>
+              <input type="text" class="form-control" id="addUnitName" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Unit -->
+  <div class="modal fade" id="modalEditUnit" tabindex="-1" aria-labelledby="modalEditUnitLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEditUnit">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditUnitLabel">Edit Unit</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editUnitId" />
+            <div class="mb-3">
+              <label for="editUnitName" class="form-label">Nama Unit</label>
+              <input type="text" class="form-control" id="editUnitName" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Master Unit -->
+  <script>
+    var unitsData = [];
+
+    function renderUnitsTable() {
+      var tbody = document.querySelector('#tblUnits tbody');
+      tbody.innerHTML = '';
+      unitsData.forEach(function(unit) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${unit.id}</td>
+          <td>${unit.name}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-unit" data-id="${unit.id}" data-name="${unit.name}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-unit" data-id="${unit.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll('.btn-edit-unit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var name = this.getAttribute('data-name');
+          document.getElementById('editUnitId').value = id;
+          document.getElementById('editUnitName').value = name;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditUnit'));
+          editModal.show();
+        });
+      });
+      document.querySelectorAll('.btn-delete-unit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus unit ini?')) {
+            deleteUnit(id);
+          }
+        });
+      });
+    }
+
+    function loadUnits() {
+      fetchJSONP('getUnits', function(res) {
+        if (res.status === 'success') {
+          unitsData = res.data;
+          renderUnitsTable();
+        } else {
+          showAlert('danger', 'Gagal muat data unit: ' + res.message);
+        }
+      });
+    }
+
+    function addUnit(name) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'addUnit', payload: { name: name } })
+      })
+      .then(function() {
+        showAlert('success', 'Unit berhasil ditambahkan (server processing).');
+        setTimeout(loadUnits, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    function updateUnit(id, name) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateUnit', payload: { id: id, name: name } })
+      })
+      .then(function() {
+        showAlert('success', 'Unit berhasil diupdate (server processing).');
+        setTimeout(loadUnits, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    function deleteUnit(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteUnit', payload: { id: id } })
+      })
+      .then(function() {
+        showAlert('success', 'Unit berhasil dihapus (server processing).');
+        setTimeout(loadUnits, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadUnits();
+
+      document.getElementById('formAddUnit').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var name = document.getElementById('addUnitName').value.trim();
+        if (name) {
+          addUnit(name);
+          document.getElementById('addUnitName').value = '';
+          var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddUnit'));
+          addModal.hide();
+        }
+      });
+
+      document.getElementById('formEditUnit').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = document.getElementById('editUnitId').value;
+        var name = document.getElementById('editUnitName').value.trim();
+        if (id && name) {
+          updateUnit(id, name);
+          var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditUnit'));
+          editModal.hide();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!--
+  pages/request-items.html
+  Modul: Detail Item Permintaan (RequestItems)
+  • GET via JSONP: getRequestItems, getMaterials
+  • POST via no-cors: addRequestItem, updateRequestItem, deleteRequestItem
+  • Query string: ?request_id=<ID>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item Permintaan</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Items</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Detail Item untuk Permintaan <span id="requestIdLabel"></span></h3>
+    <hr />
+
+    <!-- Tombol Tambah Item -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddItem">
+      <i class="bi bi-plus-circle"></i> Tambah Item
+    </button>
+
+    <!-- Tabel Daftar Item -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblRequestItems">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Material</th>
+            <th>Quantity</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di-render lewat JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Item -->
+  <div class="modal fade" id="modalAddItem" tabindex="-1" aria-labelledby="modalAddItemLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formAddItem">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddItemLabel">Tambah Item Permintaan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="addItemMaterial" class="form-label">Material</label>
+              <select class="form-select" id="addItemMaterial" required>
+                <option value="">-- Pilih Material --</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="addItemQuantity" class="form-label">Quantity</label>
+              <input type="number" step="1" class="form-control" id="addItemQuantity" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Item -->
+  <div class="modal fade" id="modalEditItem" tabindex="-1" aria-labelledby="modalEditItemLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEditItem">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditItemLabel">Edit Item Permintaan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editItemId" />
+            <div class="mb-3">
+              <label for="editItemMaterial" class="form-label">Material</label>
+              <select class="form-select" id="editItemMaterial" required>
+                <option value="">-- Pilih Material --</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editItemQuantity" class="form-label">Quantity</label>
+              <input type="number" step="1" class="form-control" id="editItemQuantity" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman RequestItems -->
+  <script>
+    // Ambil parameter request_id dari query string
+    function getQueryParam(name) {
+      var urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    var currentRequestId = getQueryParam('request_id');
+    var materialsForItems = [];
+    var requestItemsData = [];
+
+    // Tampilkan nomor request di judul
+    document.getElementById('requestIdLabel').textContent = currentRequestId || '-';
+
+    /**
+     * Isi dropdown Material untuk Adds & Edits
+     */
+    function populateItemMaterials() {
+      var addSel = document.getElementById('addItemMaterial');
+      var editSel = document.getElementById('editItemMaterial');
+      addSel.innerHTML = '<option value="">-- Pilih Material --</option>';
+      editSel.innerHTML = '<option value="">-- Pilih Material --</option>';
+      materialsForItems.forEach(function(mat) {
+        var opt1 = document.createElement('option');
+        opt1.value = mat.id;
+        opt1.text = mat.name;
+        addSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel RequestItems (hanya item yang request_id == currentRequestId)
+     */
+    function renderRequestItemsTable() {
+      var tbody = document.querySelector('#tblRequestItems tbody');
+      tbody.innerHTML = '';
+      requestItemsData
+        .filter(function(item) { return '' + item.request_id === '' + currentRequestId; })
+        .forEach(function(item) {
+          var matObj = materialsForItems.find(m => m.id == item.material_id) || { name: '-' };
+          var tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.id}</td>
+            <td>${matObj.name}</td>
+            <td>${item.quantity}</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1 btn-edit-item"
+                data-id="${item.id}"
+                data-material="${item.material_id}"
+                data-quantity="${item.quantity}">
+                <i class="bi bi-pencil-square"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-danger btn-delete-item" data-id="${item.id}">
+                <i class="bi bi-trash"></i> Hapus
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      // Tombol Edit Item
+      document.querySelectorAll('.btn-edit-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var matId = this.getAttribute('data-material');
+          var qty = this.getAttribute('data-quantity');
+          document.getElementById('editItemId').value = id;
+          document.getElementById('editItemQuantity').value = qty;
+          populateItemMaterials();
+          document.getElementById('editItemMaterial').value = matId;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditItem'));
+          editModal.show();
+        });
+      });
+
+      // Tombol Delete Item
+      document.querySelectorAll('.btn-delete-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus item ini?')) {
+            deleteRequestItem(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Materials dan RequestItems
+     */
+    function loadItemsAndMaterials() {
+      // 1. GET Materials
+      fetchJSONP('getMaterials', function(resM) {
+        if (resM.status === 'success') {
+          materialsForItems = resM.data;
+          populateItemMaterials();
+          // 2. GET RequestItems
+          fetchJSONP('getRequestItems', function(resI) {
+            if (resI.status === 'success') {
+              requestItemsData = resI.data;
+              renderRequestItemsTable();
+            } else {
+              showAlert('danger', 'Gagal muat data RequestItems: ' + resI.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data Materials: ' + resM.message);
+        }
+      });
+    }
+
+    /**
+     * Tambah RequestItem via no-CORS POST
+     */
+    function addRequestItemFunc() {
+      var matId = document.getElementById('addItemMaterial').value;
+      var qty = document.getElementById('addItemQuantity').value;
+      if (currentRequestId && matId && qty) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addRequestItem',
+            payload: {
+              request_id: currentRequestId,
+              material_id: matId,
+              quantity: parseInt(qty, 10)
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Item berhasil ditambahkan (server processing).');
+          setTimeout(loadItemsAndMaterials, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Update RequestItem via no-CORS POST
+     */
+    function updateRequestItemFunc() {
+      var id = document.getElementById('editItemId').value;
+      var matId = document.getElementById('editItemMaterial').value;
+      var qty = document.getElementById('editItemQuantity').value;
+      if (id && matId && qty) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateRequestItem',
+            payload: {
+              id: id,
+              material_id: matId,
+              quantity: parseInt(qty, 10)
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Item berhasil diupdate (server processing).');
+          setTimeout(loadItemsAndMaterials, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Delete RequestItem via no-CORS POST
+     */
+    function deleteRequestItem(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteRequestItem',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Item berhasil dihapus (server processing).');
+        setTimeout(loadItemsAndMaterials, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!currentRequestId) {
+        showAlert('danger', 'Tidak ada request_id di URL.');
+        return;
+      }
+      loadItemsAndMaterials();
+
+      // Saat modal Add muncul, reset field
+      document.getElementById('modalAddItem').addEventListener('show.bs.modal', function() {
+        document.getElementById('addItemQuantity').value = '';
+        populateItemMaterials();
+      });
+
+      // Form Tambah Item
+      document.getElementById('formAddItem').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addRequestItemFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddItem'));
+        addModal.hide();
+      });
+
+      // Form Edit Item
+      document.getElementById('formEditItem').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateRequestItemFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditItem'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>

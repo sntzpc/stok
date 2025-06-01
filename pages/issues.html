@@ -1,0 +1,422 @@
+<!--
+  pages/issues.html
+  Modul: Header Pengeluaran (Issues)
+  • GET via JSONP: getIssues, getProjects
+  • POST via no-cors: addIssue, updateIssue, deleteIssue
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pengeluaran Barang</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipts.html">Penerimaan</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="issues.html">Pengeluaran</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Daftar Pengeluaran Barang</h3>
+    <hr />
+
+    <!-- Tombol Tambah Issue -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddIssue">
+      <i class="bi bi-plus-circle"></i> Tambah Pengeluaran
+    </button>
+
+    <!-- Tabel Daftar Issues -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblIssues">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Kode</th>
+            <th>Proyek</th>
+            <th>Tanggal</th>
+            <th>Note</th>
+            <th>Created At</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Issue -->
+  <div class="modal fade" id="modalAddIssue" tabindex="-1" aria-labelledby="modalAddIssueLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddIssue">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddIssueLabel">Tambah Pengeluaran Barang</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="addIssueCode" class="form-label">Kode Pengeluaran</label>
+                <input type="text" class="form-control" id="addIssueCode" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addIssueProject" class="form-label">Proyek</label>
+                <select class="form-select" id="addIssueProject" required>
+                  <option value="">-- Pilih Proyek --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="addIssueDate" class="form-label">Tanggal Pengeluaran</label>
+                <input type="date" class="form-control" id="addIssueDate" required />
+              </div>
+              <div class="col-md-6">
+                <label for="addIssueNote" class="form-label">Note</label>
+                <input type="text" class="form-control" id="addIssueNote" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Issue -->
+  <div class="modal fade" id="modalEditIssue" tabindex="-1" aria-labelledby="modalEditIssueLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditIssue">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditIssueLabel">Edit Pengeluaran Barang</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editIssueId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="editIssueCode" class="form-label">Kode Pengeluaran</label>
+                <input type="text" class="form-control" id="editIssueCode" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editIssueProject" class="form-label">Proyek</label>
+                <select class="form-select" id="editIssueProject" required>
+                  <option value="">-- Pilih Proyek --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editIssueDate" class="form-label">Tanggal Pengeluaran</label>
+                <input type="date" class="form-control" id="editIssueDate" required />
+              </div>
+              <div class="col-md-6">
+                <label for="editIssueNote" class="form-label">Note</label>
+                <input type="text" class="form-control" id="editIssueNote" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Issues -->
+  <script>
+    var issuesData = [];
+    var projectsForIssue = [];
+
+    /**
+     * Isi dropdown Proyek (getProjects)
+     */
+    function populateIssueProjects() {
+      var addSel = document.getElementById('addIssueProject');
+      var editSel = document.getElementById('editIssueProject');
+      addSel.innerHTML = '<option value="">-- Pilih Proyek --</option>';
+      editSel.innerHTML = '<option value="">-- Pilih Proyek --</option>';
+      projectsForIssue.forEach(function(pr) {
+        var opt1 = document.createElement('option');
+        opt1.value = pr.id;
+        opt1.text = pr.name;
+        addSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel Issues
+     */
+    function renderIssuesTable() {
+      var tbody = document.querySelector('#tblIssues tbody');
+      tbody.innerHTML = '';
+      issuesData.forEach(function(issue) {
+        var prObj = projectsForIssue.find(p => p.id == issue.project_id) || { name: '-' };
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${issue.id}</td>
+          <td>${issue.issue_code}</td>
+          <td>${prObj.name}</td>
+          <td>${issue.issue_date}</td>
+          <td>${issue.note}</td>
+          <td>${issue.created_at}</td>
+          <td>
+            <button class="btn btn-sm btn-info me-1 btn-items-issue" data-id="${issue.id}">
+              <i class="bi bi-card-list"></i> Items
+            </button>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-issue"
+              data-id="${issue.id}"
+              data-code="${issue.issue_code}"
+              data-project="${issue.project_id}"
+              data-date="${issue.issue_date}"
+              data-note="${issue.note}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-issue" data-id="${issue.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Tombol "Items" → buka issue-items.html?issue_id=<ID>
+      document.querySelectorAll('.btn-items-issue').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          window.location.href = 'issue-items.html?issue_id=' + id;
+        });
+      });
+
+      // Tombol Edit
+      document.querySelectorAll('.btn-edit-issue').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id      = this.getAttribute('data-id');
+          var code    = this.getAttribute('data-code');
+          var projId  = this.getAttribute('data-project');
+          var date    = this.getAttribute('data-date');
+          var note    = this.getAttribute('data-note');
+          document.getElementById('editIssueId').value = id;
+          document.getElementById('editIssueCode').value = code;
+          document.getElementById('editIssueDate').value = date;
+          document.getElementById('editIssueNote').value = note;
+          populateIssueProjects();
+          document.getElementById('editIssueProject').value = projId;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditIssue'));
+          editModal.show();
+        });
+      });
+
+      // Tombol Delete
+      document.querySelectorAll('.btn-delete-issue').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus pengeluaran ini?')) {
+            deleteIssue(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Projects lalu Issues
+     */
+    function loadIssuesAndProjects() {
+      // 1. GET Projects
+      fetchJSONP('getProjects', function(resP) {
+        if (resP.status === 'success') {
+          projectsForIssue = resP.data;
+          populateIssueProjects();
+          // 2. GET Issues
+          fetchJSONP('getIssues', function(resI) {
+            if (resI.status === 'success') {
+              issuesData = resI.data;
+              renderIssuesTable();
+            } else {
+              showAlert('danger', 'Gagal muat data Issues: ' + resI.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data Projects: ' + resP.message);
+        }
+      });
+    }
+
+    /**
+     * Tambah Issue via no-CORS POST
+     */
+    function addIssueFunc() {
+      var code   = document.getElementById('addIssueCode').value.trim();
+      var projId = document.getElementById('addIssueProject').value;
+      var date   = document.getElementById('addIssueDate').value;
+      var note   = document.getElementById('addIssueNote').value.trim();
+      if (code && projId && date) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addIssue',
+            payload: {
+              issue_code: code,
+              project_id: projId,
+              issue_date: date,
+              note: note
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Issue berhasil ditambahkan (server processing).');
+          setTimeout(loadIssuesAndProjects, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Kode, Proyek, dan Tanggal wajib diisi.');
+      }
+    }
+
+    /**
+     * Update Issue via no-CORS POST
+     */
+    function updateIssueFunc() {
+      var id     = document.getElementById('editIssueId').value;
+      var code   = document.getElementById('editIssueCode').value.trim();
+      var projId = document.getElementById('editIssueProject').value;
+      var date   = document.getElementById('editIssueDate').value;
+      var note   = document.getElementById('editIssueNote').value.trim();
+      if (id && code && projId && date) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateIssue',
+            payload: {
+              id: id,
+              issue_code: code,
+              project_id: projId,
+              issue_date: date,
+              note: note
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Issue berhasil diupdate (server processing).');
+          setTimeout(loadIssuesAndProjects, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Kode, Proyek, dan Tanggal wajib diisi.');
+      }
+    }
+
+    /**
+     * Delete Issue via no-CORS POST
+     */
+    function deleteIssue(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteIssue',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Issue berhasil dihapus (server processing).');
+        setTimeout(loadIssuesAndProjects, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    // Event Binding saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+      loadIssuesAndProjects();
+
+      // Saat modal Add muncul, reset field
+      document.getElementById('modalAddIssue').addEventListener('show.bs.modal', function() {
+        document.getElementById('addIssueCode').value = '';
+        document.getElementById('addIssueDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('addIssueNote').value = '';
+        populateIssueProjects();
+      });
+
+      // Form Tambah Issue
+      document.getElementById('formAddIssue').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addIssueFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddIssue'));
+        addModal.hide();
+      });
+
+      // Form Edit Issue
+      document.getElementById('formEditIssue').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateIssueFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditIssue'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>

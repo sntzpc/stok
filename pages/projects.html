@@ -1,0 +1,354 @@
+<!--
+  pages/projects.html
+  Modul: Projects (Proyek/Training)
+  • GET via JSONP: getProjects
+  • POST via no-cors: addProject, updateProject, deleteProject
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Data Proyek</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="projects.html">Projects</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Data Proyek / Training</h3>
+    <hr />
+
+    <!-- Tombol Tambah Proyek -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddProject">
+      <i class="bi bi-plus-circle"></i> Tambah Proyek
+    </button>
+
+    <!-- Tabel Daftar Proyek -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblProjects">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Tgl Mulai</th>
+            <th>Tgl Selesai</th>
+            <th>Created At</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris proyek akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Proyek -->
+  <div class="modal fade" id="modalAddProject" tabindex="-1" aria-labelledby="modalAddProjectLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddProject">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddProjectLabel">Tambah Proyek</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="addProjectCode" class="form-label">Kode Proyek</label>
+                <input type="text" class="form-control" id="addProjectCode" required />
+              </div>
+              <div class="col-md-6">
+                <label for="addProjectName" class="form-label">Nama Proyek</label>
+                <input type="text" class="form-control" id="addProjectName" required />
+              </div>
+              <div class="col-md-6">
+                <label for="addProjectStart" class="form-label">Tanggal Mulai</label>
+                <input type="date" class="form-control" id="addProjectStart" required />
+              </div>
+              <div class="col-md-6">
+                <label for="addProjectEnd" class="form-label">Tanggal Selesai</label>
+                <input type="date" class="form-control" id="addProjectEnd" required />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Proyek -->
+  <div class="modal fade" id="modalEditProject" tabindex="-1" aria-labelledby="modalEditProjectLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditProject">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditProjectLabel">Edit Proyek</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editProjectId" />
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="editProjectCode" class="form-label">Kode Proyek</label>
+                <input type="text" class="form-control" id="editProjectCode" required />
+              </div>
+              <div class="col-md-6">
+                <label for="editProjectName" class="form-label">Nama Proyek</label>
+                <input type="text" class="form-control" id="editProjectName" required />
+              </div>
+              <div class="col-md-6">
+                <label for="editProjectStart" class="form-label">Tanggal Mulai</label>
+                <input type="date" class="form-control" id="editProjectStart" required />
+              </div>
+              <div class="col-md-6">
+                <label for="editProjectEnd" class="form-label">Tanggal Selesai</label>
+                <input type="date" class="form-control" id="editProjectEnd" required />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Projects -->
+  <script>
+    var projectsData = [];
+
+    function renderProjectsTable() {
+      var tbody = document.querySelector('#tblProjects tbody');
+      tbody.innerHTML = '';
+      projectsData.forEach(function(proj) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${proj.id}</td>
+          <td>${proj.code}</td>
+          <td>${proj.name}</td>
+          <td>${proj.start_date}</td>
+          <td>${proj.end_date}</td>
+          <td>${proj.created_at}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-project"
+              data-id="${proj.id}"
+              data-code="${proj.code}"
+              data-name="${proj.name}"
+              data-start="${proj.start_date}"
+              data-end="${proj.end_date}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-project" data-id="${proj.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll('.btn-edit-project').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var code = this.getAttribute('data-code');
+          var name = this.getAttribute('data-name');
+          var start = this.getAttribute('data-start');
+          var end = this.getAttribute('data-end');
+          document.getElementById('editProjectId').value = id;
+          document.getElementById('editProjectCode').value = code;
+          document.getElementById('editProjectName').value = name;
+          document.getElementById('editProjectStart').value = start;
+          document.getElementById('editProjectEnd').value = end;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditProject'));
+          editModal.show();
+        });
+      });
+
+      document.querySelectorAll('.btn-delete-project').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus proyek ini?')) {
+            deleteProject(id);
+          }
+        });
+      });
+    }
+
+    function loadProjects() {
+      fetchJSONP('getProjects', function(res) {
+        if (res.status === 'success') {
+          projectsData = res.data;
+          renderProjectsTable();
+        } else {
+          showAlert('danger', 'Gagal muat data proyek: ' + res.message);
+        }
+      });
+    }
+
+    function addProjectFunc() {
+      var code = document.getElementById('addProjectCode').value.trim();
+      var name = document.getElementById('addProjectName').value.trim();
+      var start = document.getElementById('addProjectStart').value;
+      var end = document.getElementById('addProjectEnd').value;
+      if (code && name && start && end) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addProject',
+            payload: {
+              code: code,
+              name: name,
+              start_date: start,
+              end_date: end
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Proyek berhasil ditambahkan (server processing).');
+          setTimeout(loadProjects, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    function updateProjectFunc() {
+      var id = document.getElementById('editProjectId').value;
+      var code = document.getElementById('editProjectCode').value.trim();
+      var name = document.getElementById('editProjectName').value.trim();
+      var start = document.getElementById('editProjectStart').value;
+      var end = document.getElementById('editProjectEnd').value;
+      if (id && code && name && start && end) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateProject',
+            payload: {
+              id: id,
+              code: code,
+              name: name,
+              start_date: start,
+              end_date: end
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Proyek berhasil diupdate (server processing).');
+          setTimeout(loadProjects, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    function deleteProject(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteProject',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Proyek berhasil dihapus (server processing).');
+        setTimeout(loadProjects, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProjects();
+
+      // Reset field dan show modal Add
+      document.getElementById('modalAddProject').addEventListener('show.bs.modal', function() {
+        document.getElementById('addProjectCode').value = '';
+        document.getElementById('addProjectName').value = '';
+        document.getElementById('addProjectStart').value = '';
+        document.getElementById('addProjectEnd').value = '';
+      });
+
+      document.getElementById('formAddProject').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addProjectFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddProject'));
+        addModal.hide();
+      });
+
+      document.getElementById('formEditProject').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateProjectFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditProject'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>

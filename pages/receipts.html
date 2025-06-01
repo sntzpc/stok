@@ -1,0 +1,421 @@
+<!--
+  pages/receipts.html
+  Modul: Penerimaan Barang (Receipts)
+  • GET via JSONP: getReceipts, getLocations
+  • POST via no-cors: addReceipt, updateReceipt, deleteReceipt
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Penerimaan Barang</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="receipts.html">Penerimaan</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Daftar Penerimaan Barang</h3>
+    <hr />
+
+    <!-- Tombol Tambah Receipt -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddReceipt">
+      <i class="bi bi-plus-circle"></i> Tambah Penerimaan
+    </button>
+
+    <!-- Tabel Daftar Receipts -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblReceipts">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Kode</th>
+            <th>Lokasi</th>
+            <th>Tanggal</th>
+            <th>Supplier</th>
+            <th>Created At</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Receipt -->
+  <div class="modal fade" id="modalAddReceipt" tabindex="-1" aria-labelledby="modalAddReceiptLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddReceipt">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddReceiptLabel">Tambah Penerimaan Barang</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="addReceiptCode" class="form-label">Kode Penerimaan</label>
+                <input type="text" class="form-control" id="addReceiptCode" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addReceiptLocation" class="form-label">Lokasi (Gudang)</label>
+                <select class="form-select" id="addReceiptLocation" required>
+                  <option value="">-- Pilih Lokasi --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="addReceiptDate" class="form-label">Tanggal Penerimaan</label>
+                <input type="date" class="form-control" id="addReceiptDate" required />
+              </div>
+              <div class="col-md-6">
+                <label for="addReceiptSupplier" class="form-label">Supplier</label>
+                <input type="text" class="form-control" id="addReceiptSupplier" required />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Receipt -->
+  <div class="modal fade" id="modalEditReceipt" tabindex="-1" aria-labelledby="modalEditReceiptLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditReceipt">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditReceiptLabel">Edit Penerimaan Barang</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editReceiptId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="editReceiptCode" class="form-label">Kode Penerimaan</label>
+                <input type="text" class="form-control" id="editReceiptCode" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editReceiptLocation" class="form-label">Lokasi (Gudang)</label>
+                <select class="form-select" id="editReceiptLocation" required>
+                  <option value="">-- Pilih Lokasi --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editReceiptDate" class="form-label">Tanggal Penerimaan</label>
+                <input type="date" class="form-control" id="editReceiptDate" required />
+              </div>
+              <div class="col-md-6">
+                <label for="editReceiptSupplier" class="form-label">Supplier</label>
+                <input type="text" class="form-control" id="editReceiptSupplier" required />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Receipts -->
+  <script>
+    var receiptsData = [];
+    var locationsForReceipt = [];
+
+    /**
+     * Isi dropdown Lokasi (getLocations)
+     */
+    function populateReceiptLocations() {
+      var addSel = document.getElementById('addReceiptLocation');
+      var editSel = document.getElementById('editReceiptLocation');
+      addSel.innerHTML = '<option value="">-- Pilih Lokasi --</option>';
+      editSel.innerHTML = '<option value="">-- Pilih Lokasi --</option>';
+      locationsForReceipt.forEach(function(loc) {
+        var opt1 = document.createElement('option');
+        opt1.value = loc.id;
+        opt1.text = loc.name;
+        addSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel Receipts
+     */
+    function renderReceiptsTable() {
+      var tbody = document.querySelector('#tblReceipts tbody');
+      tbody.innerHTML = '';
+      receiptsData.forEach(function(rec) {
+        var locObj = locationsForReceipt.find(l => l.id == rec.location_id) || { name: '-' };
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${rec.id}</td>
+          <td>${rec.receipt_code}</td>
+          <td>${locObj.name}</td>
+          <td>${rec.receipt_date}</td>
+          <td>${rec.supplier}</td>
+          <td>${rec.created_at}</td>
+          <td>
+            <button class="btn btn-sm btn-info me-1 btn-items-receipt" data-id="${rec.id}">
+              <i class="bi bi-card-list"></i> Items
+            </button>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-receipt"
+              data-id="${rec.id}"
+              data-code="${rec.receipt_code}"
+              data-location="${rec.location_id}"
+              data-date="${rec.receipt_date}"
+              data-supplier="${rec.supplier}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-receipt" data-id="${rec.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Tombol "Items" → buka receipt-items.html?receipt_id=<ID>
+      document.querySelectorAll('.btn-items-receipt').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          window.location.href = 'receipt-items.html?receipt_id=' + id;
+        });
+      });
+
+      // Tombol Edit
+      document.querySelectorAll('.btn-edit-receipt').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id       = this.getAttribute('data-id');
+          var code     = this.getAttribute('data-code');
+          var locId    = this.getAttribute('data-location');
+          var date     = this.getAttribute('data-date');
+          var supplier = this.getAttribute('data-supplier');
+          document.getElementById('editReceiptId').value = id;
+          document.getElementById('editReceiptCode').value = code;
+          document.getElementById('editReceiptDate').value = date;
+          document.getElementById('editReceiptSupplier').value = supplier;
+          populateReceiptLocations();
+          document.getElementById('editReceiptLocation').value = locId;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditReceipt'));
+          editModal.show();
+        });
+      });
+
+      // Tombol Delete
+      document.querySelectorAll('.btn-delete-receipt').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus penerimaan ini?')) {
+            deleteReceipt(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Locations lalu Receipts
+     */
+    function loadReceiptsAndLocations() {
+      // 1. GET Locations
+      fetchJSONP('getLocations', function(resL) {
+        if (resL.status === 'success') {
+          locationsForReceipt = resL.data;
+          populateReceiptLocations();
+          // 2. GET Receipts
+          fetchJSONP('getReceipts', function(resR) {
+            if (resR.status === 'success') {
+              receiptsData = resR.data;
+              renderReceiptsTable();
+            } else {
+              showAlert('danger', 'Gagal muat data Receipts: ' + resR.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data Locations: ' + resL.message);
+        }
+      });
+    }
+
+    /**
+     * Tambah Receipt via no-CORS POST
+     */
+    function addReceiptFunc() {
+      var code     = document.getElementById('addReceiptCode').value.trim();
+      var locId    = document.getElementById('addReceiptLocation').value;
+      var date     = document.getElementById('addReceiptDate').value;
+      var supplier = document.getElementById('addReceiptSupplier').value.trim();
+      if (code && locId && date && supplier) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addReceipt',
+            payload: {
+              receipt_code: code,
+              location_id: locId,
+              receipt_date: date,
+              supplier: supplier
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Penerimaan berhasil ditambahkan (server processing).');
+          setTimeout(loadReceiptsAndLocations, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Update Receipt via no-CORS POST
+     */
+    function updateReceiptFunc() {
+      var id       = document.getElementById('editReceiptId').value;
+      var code     = document.getElementById('editReceiptCode').value.trim();
+      var locId    = document.getElementById('editReceiptLocation').value;
+      var date     = document.getElementById('editReceiptDate').value;
+      var supplier = document.getElementById('editReceiptSupplier').value.trim();
+      if (id && code && locId && date && supplier) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateReceipt',
+            payload: {
+              id: id,
+              receipt_code: code,
+              location_id: locId,
+              receipt_date: date,
+              supplier: supplier
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Penerimaan berhasil diupdate (server processing).');
+          setTimeout(loadReceiptsAndLocations, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Delete Receipt via no-CORS POST
+     */
+    function deleteReceipt(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteReceipt',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Penerimaan berhasil dihapus (server processing).');
+        setTimeout(loadReceiptsAndLocations, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    // Event Binding saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+      loadReceiptsAndLocations();
+
+      // Saat modal Add muncul, reset field
+      document.getElementById('modalAddReceipt').addEventListener('show.bs.modal', function() {
+        document.getElementById('addReceiptCode').value = '';
+        document.getElementById('addReceiptDate').value = new Date().toISOString().slice(0,10);
+        document.getElementById('addReceiptSupplier').value = '';
+        populateReceiptLocations();
+      });
+
+      // Form Tambah Receipt
+      document.getElementById('formAddReceipt').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addReceiptFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddReceipt'));
+        addModal.hide();
+      });
+
+      // Form Edit Receipt
+      document.getElementById('formEditReceipt').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateReceiptFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditReceipt'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>

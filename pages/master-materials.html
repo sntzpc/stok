@@ -1,0 +1,468 @@
+<!--
+  pages/master-materials.html
+  Modul: Master Data Material
+  • GET via JSONP: getMaterials, getCategories, getUnits
+  • POST via no-cors: addMaterial, updateMaterial, deleteMaterial
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Master Data - Material</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="master-materials.html">Master Material</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Master Data - Material</h3>
+    <hr />
+
+    <!-- Tombol Tambah Material Baru -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddMaterial">
+      <i class="bi bi-plus-circle"></i> Tambah Material
+    </button>
+
+    <!-- Tabel Daftar Material -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblMaterials">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Kategori</th>
+            <th>Unit</th>
+            <th>Has Expiry</th>
+            <th>Dibuat Pada</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Akan diisi lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Material -->
+  <div class="modal fade" id="modalAddMaterial" tabindex="-1" aria-labelledby="modalAddMaterialLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddMaterial">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddMaterialLabel">Tambah Material</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="addMaterialCode" class="form-label">Kode</label>
+                <input type="text" class="form-control" id="addMaterialCode" required />
+              </div>
+              <div class="col-md-8">
+                <label for="addMaterialName" class="form-label">Nama Material</label>
+                <input type="text" class="form-control" id="addMaterialName" required />
+              </div>
+              <div class="col-md-6">
+                <label for="addMaterialCategory" class="form-label">Kategori</label>
+                <select class="form-select" id="addMaterialCategory" required>
+                  <option value="">-- Pilih Kategori --</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="addMaterialUnit" class="form-label">Unit</label>
+                <select class="form-select" id="addMaterialUnit" required>
+                  <option value="">-- Pilih Unit --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check mt-4">
+                  <input class="form-check-input" type="checkbox" id="addMaterialExpiry" />
+                  <label class="form-check-label" for="addMaterialExpiry">
+                    Memiliki Tanggal Kadaluarsa
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Material -->
+  <div class="modal fade" id="modalEditMaterial" tabindex="-1" aria-labelledby="modalEditMaterialLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditMaterial">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditMaterialLabel">Edit Material</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editMaterialId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="editMaterialCode" class="form-label">Kode</label>
+                <input type="text" class="form-control" id="editMaterialCode" required />
+              </div>
+              <div class="col-md-8">
+                <label for="editMaterialName" class="form-label">Nama Material</label>
+                <input type="text" class="form-control" id="editMaterialName" required />
+              </div>
+              <div class="col-md-6">
+                <label for="editMaterialCategory" class="form-label">Kategori</label>
+                <select class="form-select" id="editMaterialCategory" required>
+                  <option value="">-- Pilih Kategori --</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="editMaterialUnit" class="form-label">Unit</label>
+                <select class="form-select" id="editMaterialUnit" required>
+                  <option value="">-- Pilih Unit --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check mt-4">
+                  <input class="form-check-input" type="checkbox" id="editMaterialExpiry" />
+                  <label class="form-check-label" for="editMaterialExpiry">
+                    Memiliki Tanggal Kadaluarsa
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Master Materials -->
+  <script>
+    // Data cache
+    var categoriesData = [];
+    var unitsData = [];
+    var materialsData = [];
+
+    /**
+     * Populate dropdown Kategori dan Unit saat modal tampil.
+     */
+    function populateDropdowns() {
+      // Kosongkan kemudian isi Categories
+      var addCatSel = document.getElementById('addMaterialCategory');
+      var editCatSel = document.getElementById('editMaterialCategory');
+      addCatSel.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+      editCatSel.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+      categoriesData.forEach(function(cat) {
+        var opt1 = document.createElement('option');
+        opt1.value = cat.id;
+        opt1.text = cat.name;
+        addCatSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editCatSel.appendChild(opt2);
+      });
+
+      // Kosongkan kemudian isi Units
+      var addUnitSel = document.getElementById('addMaterialUnit');
+      var editUnitSel = document.getElementById('editMaterialUnit');
+      addUnitSel.innerHTML = '<option value="">-- Pilih Unit --</option>';
+      editUnitSel.innerHTML = '<option value="">-- Pilih Unit --</option>';
+      unitsData.forEach(function(u) {
+        var opt1 = document.createElement('option');
+        opt1.value = u.id;
+        opt1.text = u.name;
+        addUnitSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editUnitSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel Material.
+     */
+    function renderMaterialsTable() {
+      var tbody = document.querySelector('#tblMaterials tbody');
+      tbody.innerHTML = '';
+      materialsData.forEach(function(mat) {
+        // Cari nama kategori dan unit dari ID
+        var catObj = categoriesData.find(c => c.id == mat.category_id) || { name: '-' };
+        var unitObj = unitsData.find(u => u.id == mat.unit_id) || { name: '-' };
+        var hasExp = mat.has_expiry == 1 ? 'Ya' : 'Tidak';
+
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${mat.id}</td>
+          <td>${mat.code}</td>
+          <td>${mat.name}</td>
+          <td>${catObj.name}</td>
+          <td>${unitObj.name}</td>
+          <td>${hasExp}</td>
+          <td>${mat.created_at}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-material"
+              data-id="${mat.id}"
+              data-code="${mat.code}"
+              data-name="${mat.name}"
+              data-category="${mat.category_id}"
+              data-unit="${mat.unit_id}"
+              data-expiry="${mat.has_expiry}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-material" data-id="${mat.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind tombol Edit & Delete
+      document.querySelectorAll('.btn-edit-material').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var code = this.getAttribute('data-code');
+          var name = this.getAttribute('data-name');
+          var categoryId = this.getAttribute('data-category');
+          var unitId = this.getAttribute('data-unit');
+          var hasExp = this.getAttribute('data-expiry') == '1';
+
+          document.getElementById('editMaterialId').value = id;
+          document.getElementById('editMaterialCode').value = code;
+          document.getElementById('editMaterialName').value = name;
+          document.getElementById('editMaterialCategory').value = categoryId;
+          document.getElementById('editMaterialUnit').value = unitId;
+          document.getElementById('editMaterialExpiry').checked = hasExp;
+
+          // Pastikan dropdown sudah terisi
+          populateDropdowns();
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditMaterial'));
+          editModal.show();
+        });
+      });
+      document.querySelectorAll('.btn-delete-material').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus material ini?')) {
+            deleteMaterial(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Kategori, Units, dan Material secara berurutan (JSONP).
+     */
+    function loadInitialData() {
+      // 1. Load Categories
+      fetchJSONP('getCategories', function(resCat) {
+        if (resCat.status === 'success') {
+          categoriesData = resCat.data;
+          // 2. Load Units
+          fetchJSONP('getUnits', function(resUnit) {
+            if (resUnit.status === 'success') {
+              unitsData = resUnit.data;
+              // 3. Load Materials
+              fetchJSONP('getMaterials', function(resMat) {
+                if (resMat.status === 'success') {
+                  materialsData = resMat.data;
+                  renderMaterialsTable();
+                } else {
+                  showAlert('danger', 'Gagal muat data material: ' + resMat.message);
+                }
+              });
+            } else {
+              showAlert('danger', 'Gagal muat data unit: ' + resUnit.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data kategori: ' + resCat.message);
+        }
+      });
+    }
+
+    /**
+     * Tambah material via no-CORS POST.
+     */
+    function addMaterial(code, name, categoryId, unitId, hasExpiry) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'addMaterial',
+          payload: {
+            code: code,
+            name: name,
+            category_id: categoryId,
+            unit_id: unitId,
+            has_expiry: hasExpiry ? 1 : 0
+          }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Material berhasil ditambahkan (server processing).');
+        setTimeout(loadInitialData, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    /**
+     * Update material via no-CORS POST.
+     */
+    function updateMaterial(id, code, name, categoryId, unitId, hasExpiry) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'updateMaterial',
+          payload: {
+            id: id,
+            code: code,
+            name: name,
+            category_id: categoryId,
+            unit_id: unitId,
+            has_expiry: hasExpiry ? 1 : 0
+          }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Material berhasil diupdate (server processing).');
+        setTimeout(loadInitialData, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    /**
+     * Delete material via no-CORS POST.
+     */
+    function deleteMaterial(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteMaterial',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Material berhasil dihapus (server processing).');
+        setTimeout(loadInitialData, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    // Event Binding saat halaman selesai load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Muat data awal: kategori, unit, material
+      loadInitialData();
+
+      // Saat modal Add akan tampil, pastikan dropdown terisi
+      document.getElementById('modalAddMaterial').addEventListener('show.bs.modal', function() {
+        populateDropdowns();
+        // Reset field
+        document.getElementById('addMaterialCode').value = '';
+        document.getElementById('addMaterialName').value = '';
+        document.getElementById('addMaterialCategory').value = '';
+        document.getElementById('addMaterialUnit').value = '';
+        document.getElementById('addMaterialExpiry').checked = false;
+      });
+
+      // Form Tambah Material
+      document.getElementById('formAddMaterial').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var code = document.getElementById('addMaterialCode').value.trim();
+        var name = document.getElementById('addMaterialName').value.trim();
+        var categoryId = document.getElementById('addMaterialCategory').value;
+        var unitId = document.getElementById('addMaterialUnit').value;
+        var hasExpiry = document.getElementById('addMaterialExpiry').checked;
+        if (code && name && categoryId && unitId) {
+          addMaterial(code, name, categoryId, unitId, hasExpiry);
+          var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddMaterial'));
+          addModal.hide();
+        } else {
+          showAlert('warning', 'Semua isian kecuali “Has Expiry” wajib diisi.');
+        }
+      });
+
+      // Form Edit Material
+      document.getElementById('formEditMaterial').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = document.getElementById('editMaterialId').value;
+        var code = document.getElementById('editMaterialCode').value.trim();
+        var name = document.getElementById('editMaterialName').value.trim();
+        var categoryId = document.getElementById('editMaterialCategory').value;
+        var unitId = document.getElementById('editMaterialUnit').value;
+        var hasExpiry = document.getElementById('editMaterialExpiry').checked;
+        if (id && code && name && categoryId && unitId) {
+          updateMaterial(id, code, name, categoryId, unitId, hasExpiry);
+          var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditMaterial'));
+          editModal.hide();
+        } else {
+          showAlert('warning', 'Semua isian kecuali “Has Expiry” wajib diisi.');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+<!--
+  pages/stock.html
+  Modul: Manajemen Stok (CRUD) & Minimum Stock Alert
+  • GET via JSONP: getStock, getMaterials, getLocations
+  • POST via no-cors: addStock, updateStock, deleteStock, checkAndNotifyMinStock
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manajemen Stok</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    /* Tandai baris yang di bawah atau sama dengan minimum stock */
+    .table-warning-row {
+      background-color: #ffeeba !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipts.html">Penerimaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="issues.html">Pengeluaran</a></li>
+          <li class="nav-item"><a class="nav-link" href="adjustments.html">Penyesuaian</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Manajemen Stok</h3>
+    <hr />
+
+    <!-- Tombol Tambah Stock Baru -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddStock">
+      <i class="bi bi-plus-circle"></i> Tambah Stock
+    </button>
+
+    <!-- Tombol untuk memicu pengecekan minimum stock -->
+    <button id="btnCheckMinStock" class="btn btn-danger mb-3 ms-2">
+      <i class="bi bi-bell-fill"></i> Cek & Notifikasi Minimum Stock
+    </button>
+
+    <!-- Tabel Daftar Stock -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblStock">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Material</th>
+            <th>Lokasi</th>
+            <th>Quantity</th>
+            <th>Average Cost</th>
+            <th>Minimum Stock</th>
+            <th>Safety Stock</th>
+            <th>Last Updated</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Stock -->
+  <div class="modal fade" id="modalAddStock" tabindex="-1" aria-labelledby="modalAddStockLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddStock">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddStockLabel">Tambah Stock</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="addStockMaterial" class="form-label">Material</label>
+                <select class="form-select" id="addStockMaterial" required>
+                  <option value="">-- Pilih Material --</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="addStockLocation" class="form-label">Lokasi</label>
+                <select class="form-select" id="addStockLocation" required>
+                  <option value="">-- Pilih Lokasi --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="addStockQuantity" class="form-label">Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="addStockQuantity" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addStockAvgCost" class="form-label">Average Cost</label>
+                <input type="number" step="0.01" class="form-control" id="addStockAvgCost" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addStockMin" class="form-label">Minimum Stock</label>
+                <input type="number" step="0.01" class="form-control" id="addStockMin" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addStockSafety" class="form-label">Safety Stock</label>
+                <input type="number" step="0.01" class="form-control" id="addStockSafety" required />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Stock (Quantity, AvgCost, Min, Safety) -->
+  <div class="modal fade" id="modalEditStock" tabindex="-1" aria-labelledby="modalEditStockLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditStock">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditStockLabel">Edit Stock</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editStockId" />
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="editStockMaterial" class="form-label">Material</label>
+                <select class="form-select" id="editStockMaterial" required>
+                  <option value="">-- Pilih Material --</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="editStockLocation" class="form-label">Lokasi</label>
+                <select class="form-select" id="editStockLocation" required>
+                  <option value="">-- Pilih Lokasi --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editStockQuantity" class="form-label">Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="editStockQuantity" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editStockAvgCost" class="form-label">Average Cost</label>
+                <input type="number" step="0.01" class="form-control" id="editStockAvgCost" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editStockMin" class="form-label">Minimum Stock</label>
+                <input type="number" step="0.01" class="form-control" id="editStockMin" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editStockSafety" class="form-label">Safety Stock</label>
+                <input type="number" step="0.01" class="form-control" id="editStockSafety" required />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Stock -->
+  <script>
+    var materialsStock = [];
+    var locationsStock = [];
+    var stockData = [];
+
+    /** 
+     * Populate dropdown Material & Location untuk modals Add/Edit
+     */
+    function populateStockDropdowns() {
+      // Material
+      var addMatSel  = document.getElementById('addStockMaterial');
+      var editMatSel = document.getElementById('editStockMaterial');
+      addMatSel.innerHTML  = '<option value="">-- Pilih Material --</option>';
+      editMatSel.innerHTML = '<option value="">-- Pilih Material --</option>';
+      materialsStock.forEach(function(mat) {
+        var opt1 = document.createElement('option');
+        opt1.value = mat.id;
+        opt1.text  = mat.name;
+        addMatSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editMatSel.appendChild(opt2);
+      });
+
+      // Location
+      var addLocSel  = document.getElementById('addStockLocation');
+      var editLocSel = document.getElementById('editStockLocation');
+      addLocSel.innerHTML  = '<option value="">-- Pilih Lokasi --</option>';
+      editLocSel.innerHTML = '<option value="">-- Pilih Lokasi --</option>';
+      locationsStock.forEach(function(loc) {
+        var opt1 = document.createElement('option');
+        opt1.value = loc.id;
+        opt1.text  = loc.name;
+        addLocSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editLocSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel Stock, sekaligus tandai baris jika stock ≤ minimum_stock
+     */
+    function renderStockTable() {
+      var tbody = document.querySelector('#tblStock tbody');
+      tbody.innerHTML = '';
+      stockData.forEach(function(s) {
+        var matObj = materialsStock.find(m => m.id == s.material_id) || { name: '-' };
+        var locObj = locationsStock.find(l => l.id == s.location_id) || { name: '-' };
+        var warnClass = Number(s.quantity) <= Number(s.minimum_stock) ? 'table-warning-row' : '';
+        var tr = document.createElement('tr');
+        tr.className = warnClass;
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${matObj.name}</td>
+          <td>${locObj.name}</td>
+          <td>${s.quantity}</td>
+          <td>${s.average_cost}</td>
+          <td>${s.minimum_stock}</td>
+          <td>${s.safety_stock}</td>
+          <td>${s.last_updated}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit-stock"
+              data-id="${s.id}"
+              data-material="${s.material_id}"
+              data-location="${s.location_id}"
+              data-quantity="${s.quantity}"
+              data-avgcost="${s.average_cost}"
+              data-min="${s.minimum_stock}"
+              data-safety="${s.safety_stock}">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete-stock" data-id="${s.id}">
+              <i class="bi bi-trash"></i> Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind tombol Edit
+      document.querySelectorAll('.btn-edit-stock').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id      = this.getAttribute('data-id');
+          var matId   = this.getAttribute('data-material');
+          var locId   = this.getAttribute('data-location');
+          var qty     = this.getAttribute('data-quantity');
+          var avg     = this.getAttribute('data-avgcost');
+          var minVal  = this.getAttribute('data-min');
+          var safeVal = this.getAttribute('data-safety');
+
+          document.getElementById('editStockId').value         = id;
+          document.getElementById('editStockQuantity').value   = qty;
+          document.getElementById('editStockAvgCost').value    = avg;
+          document.getElementById('editStockMin').value        = minVal;
+          document.getElementById('editStockSafety').value     = safeVal;
+          
+          populateStockDropdowns();
+          document.getElementById('editStockMaterial').value   = matId;
+          document.getElementById('editStockLocation').value   = locId;
+
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditStock'));
+          editModal.show();
+        });
+      });
+
+      // Bind tombol Delete
+      document.querySelectorAll('.btn-delete-stock').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus stok ini?')) {
+            deleteStock(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Materials, Locations, Stock secara berurutan
+     */
+    function loadStockAndRefs() {
+      // 1. GET Materials
+      fetchJSONP('getMaterials', function(resM) {
+        if (resM.status === 'success') {
+          materialsStock = resM.data;
+        } else {
+          showAlert('danger', 'Gagal muat data Materials: ' + resM.message);
+          return;
+        }
+        // 2. GET Locations
+        fetchJSONP('getLocations', function(resL) {
+          if (resL.status === 'success') {
+            locationsStock = resL.data;
+          } else {
+            showAlert('danger', 'Gagal muat data Locations: ' + resL.message);
+            return;
+          }
+          // 3. GET Stock
+          fetchJSONP('getStock', function(resS) {
+            if (resS.status === 'success') {
+              stockData = resS.data;
+              renderStockTable();
+            } else {
+              showAlert('danger', 'Gagal muat data Stock: ' + resS.message);
+            }
+          });
+        });
+      });
+    }
+
+    /**
+     * Tambah Stock via no-CORS POST
+     */
+    function addStockFunc() {
+      var matId = document.getElementById('addStockMaterial').value;
+      var locId = document.getElementById('addStockLocation').value;
+      var qty   = document.getElementById('addStockQuantity').value;
+      var avg   = document.getElementById('addStockAvgCost').value;
+      var min   = document.getElementById('addStockMin').value;
+      var safe  = document.getElementById('addStockSafety').value;
+      if (matId && locId && qty && avg && min && safe) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addStock',
+            payload: {
+              material_id:    matId,
+              location_id:    locId,
+              quantity:       parseFloat(qty),
+              average_cost:   parseFloat(avg),
+              minimum_stock:  parseFloat(min),
+              safety_stock:   parseFloat(safe)
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Stock berhasil ditambahkan (server processing).');
+          setTimeout(loadStockAndRefs, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Update Stock via no-CORS POST (quantity, avgCost, min, safety)
+     */
+    function updateStockFunc() {
+      var id    = document.getElementById('editStockId').value;
+      var matId = document.getElementById('editStockMaterial').value;
+      var locId = document.getElementById('editStockLocation').value;
+      var qty   = document.getElementById('editStockQuantity').value;
+      var avg   = document.getElementById('editStockAvgCost').value;
+      var min   = document.getElementById('editStockMin').value;
+      var safe  = document.getElementById('editStockSafety').value;
+      if (id && matId && locId && qty && avg && min && safe) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateStock',
+            payload: {
+              id:              id,
+              material_id:     matId,
+              location_id:     locId,
+              quantity:        parseFloat(qty),
+              average_cost:    parseFloat(avg),
+              minimum_stock:   parseFloat(min),
+              safety_stock:    parseFloat(safe)
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Stock berhasil diupdate (server processing).');
+          setTimeout(loadStockAndRefs, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field wajib diisi.');
+      }
+    }
+
+    /**
+     * Delete Stock via no-CORS POST
+     */
+    function deleteStock(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteStock',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Stock berhasil dihapus (server processing).');
+        setTimeout(loadStockAndRefs, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    /**
+     * Cek & kirim notifikasi Telegram untuk stok yang di bawah minimum
+     */
+    function checkMinStockFunc() {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'checkAndNotifyMinStock'
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Proses pengecekan stok minimum telah dijalankan (server processing).');
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal menjalankan pengecekan stok minimum.');
+      });
+    }
+
+    // Event Binding saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+      loadStockAndRefs();
+
+      // Modal Add: reset dan populate dropdown
+      document.getElementById('modalAddStock').addEventListener('show.bs.modal', function() {
+        populateStockDropdowns();
+        document.getElementById('addStockQuantity').value   = '';
+        document.getElementById('addStockAvgCost').value    = '';
+        document.getElementById('addStockMin').value        = '';
+        document.getElementById('addStockSafety').value     = '';
+      });
+
+      // Submit Tambah Stock
+      document.getElementById('formAddStock').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addStockFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddStock'));
+        addModal.hide();
+      });
+
+      // Submit Edit Stock
+      document.getElementById('formEditStock').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateStockFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditStock'));
+        editModal.hide();
+      });
+
+      // Tombol Cek & Notifikasi Minimum Stock
+      document.getElementById('btnCheckMinStock').addEventListener('click', function() {
+        if (confirm('Apakah Anda yakin ingin melakukan pengecekan stok minimum sekarang?')) {
+          checkMinStockFunc();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!--
+  pages/receipt-items.html
+  Modul: Detail Item Penerimaan (ReceiptItems)
+  • GET via JSONP: getReceiptItems, getMaterials
+  • POST via no-cors: addReceiptItem, updateReceiptItem, deleteReceiptItem
+  • Query string: ?receipt_id=<ID>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item Penerimaan</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipts.html">Penerimaan</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Items</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Detail Item untuk Penerimaan <span id="receiptIdLabel"></span></h3>
+    <hr />
+
+    <!-- Tombol Tambah Item -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAddReceiptItem">
+      <i class="bi bi-plus-circle"></i> Tambah Item
+    </button>
+
+    <!-- Tabel Daftar ReceiptItems -->
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblReceiptItems">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Material</th>
+            <th>Quantity</th>
+            <th>Price Actual</th>
+            <th>Condition</th>
+            <th>Note</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah ReceiptItem -->
+  <div class="modal fade" id="modalAddReceiptItem" tabindex="-1" aria-labelledby="modalAddReceiptItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formAddReceiptItem">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalAddReceiptItemLabel">Tambah Item Penerimaan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="addReceiptItemMaterial" class="form-label">Material</label>
+                <select class="form-select" id="addReceiptItemMaterial" required>
+                  <option value="">-- Pilih Material --</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="addReceiptItemQuantity" class="form-label">Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="addReceiptItemQuantity" required />
+              </div>
+              <div class="col-md-3">
+                <label for="addReceiptItemPrice" class="form-label">Price Actual</label>
+                <input type="number" step="0.01" class="form-control" id="addReceiptItemPrice" required />
+              </div>
+              <div class="col-md-4">
+                <label for="addReceiptItemCondition" class="form-label">Condition</label>
+                <select class="form-select" id="addReceiptItemCondition" required>
+                  <option value="Good">Good</option>
+                  <option value="Damaged">Damaged</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <label for="addReceiptItemNote" class="form-label">Note</label>
+                <input type="text" class="form-control" id="addReceiptItemNote" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit ReceiptItem -->
+  <div class="modal fade" id="modalEditReceiptItem" tabindex="-1" aria-labelledby="modalEditReceiptItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="formEditReceiptItem">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEditReceiptItemLabel">Edit Item Penerimaan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editReceiptItemId" />
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="editReceiptItemMaterial" class="form-label">Material</label>
+                <select class="form-select" id="editReceiptItemMaterial" required>
+                  <option value="">-- Pilih Material --</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="editReceiptItemQuantity" class="form-label">Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="editReceiptItemQuantity" required />
+              </div>
+              <div class="col-md-3">
+                <label for="editReceiptItemPrice" class="form-label">Price Actual</label>
+                <input type="number" step="0.01" class="form-control" id="editReceiptItemPrice" required />
+              </div>
+              <div class="col-md-4">
+                <label for="editReceiptItemCondition" class="form-label">Condition</label>
+                <select class="form-select" id="editReceiptItemCondition" required>
+                  <option value="Good">Good</option>
+                  <option value="Damaged">Damaged</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <label for="editReceiptItemNote" class="form-label">Note</label>
+                <input type="text" class="form-control" id="editReceiptItemNote" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman ReceiptItems -->
+  <script>
+    // Ambil parameter receipt_id dari query string
+    function getQueryParam(name) {
+      var urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    var currentReceiptId    = getQueryParam('receipt_id');
+    var materialsForReceipt = [];
+    var receiptItemsData    = [];
+
+    // Tampilkan nomor receipt di judul
+    document.getElementById('receiptIdLabel').textContent = currentReceiptId || '-';
+
+    /**
+     * Isi dropdown Material
+     */
+    function populateReceiptItemMaterials() {
+      var addSel  = document.getElementById('addReceiptItemMaterial');
+      var editSel = document.getElementById('editReceiptItemMaterial');
+      addSel.innerHTML  = '<option value="">-- Pilih Material --</option>';
+      editSel.innerHTML = '<option value="">-- Pilih Material --</option>';
+      materialsForReceipt.forEach(function(mat) {
+        var opt1 = document.createElement('option');
+        opt1.value = mat.id;
+        opt1.text  = mat.name;
+        addSel.appendChild(opt1);
+        var opt2 = opt1.cloneNode(true);
+        editSel.appendChild(opt2);
+      });
+    }
+
+    /**
+     * Render tabel ReceiptItems (hanya untuk currentReceiptId)
+     */
+    function renderReceiptItemsTable() {
+      var tbody = document.querySelector('#tblReceiptItems tbody');
+      tbody.innerHTML = '';
+      receiptItemsData
+        .filter(function(item) { return '' + item.receipt_id === '' + currentReceiptId; })
+        .forEach(function(item) {
+          var matObj = materialsForReceipt.find(m => m.id == item.material_id) || { name: '-' };
+          var tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.id}</td>
+            <td>${matObj.name}</td>
+            <td>${item.quantity_received}</td>
+            <td>${item.price_actual}</td>
+            <td>${item.condition}</td>
+            <td>${item.note}</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1 btn-edit-receipt-item"
+                data-id="${item.id}"
+                data-material="${item.material_id}"
+                data-quantity="${item.quantity_received}"
+                data-price="${item.price_actual}"
+                data-condition="${item.condition}"
+                data-note="${item.note}">
+                <i class="bi bi-pencil-square"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-danger btn-delete-receipt-item" data-id="${item.id}">
+                <i class="bi bi-trash"></i> Hapus
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      // Tombol Edit Item
+      document.querySelectorAll('.btn-edit-receipt-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id      = this.getAttribute('data-id');
+          var matId   = this.getAttribute('data-material');
+          var qty     = this.getAttribute('data-quantity');
+          var price   = this.getAttribute('data-price');
+          var cond    = this.getAttribute('data-condition');
+          var note    = this.getAttribute('data-note');
+          document.getElementById('editReceiptItemId').value = id;
+          document.getElementById('editReceiptItemQuantity').value = qty;
+          document.getElementById('editReceiptItemPrice').value = price;
+          document.getElementById('editReceiptItemCondition').value = cond;
+          document.getElementById('editReceiptItemNote').value = note;
+          populateReceiptItemMaterials();
+          document.getElementById('editReceiptItemMaterial').value = matId;
+          var editModal = new bootstrap.Modal(document.getElementById('modalEditReceiptItem'));
+          editModal.show();
+        });
+      });
+
+      // Tombol Delete Item
+      document.querySelectorAll('.btn-delete-receipt-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('Yakin ingin menghapus item ini?')) {
+            deleteReceiptItem(id);
+          }
+        });
+      });
+    }
+
+    /**
+     * Load data Materials lalu ReceiptItems
+     */
+    function loadReceiptItemsAndMaterials() {
+      // 1. GET Materials
+      fetchJSONP('getMaterials', function(resM) {
+        if (resM.status === 'success') {
+          materialsForReceipt = resM.data;
+          populateReceiptItemMaterials();
+          // 2. GET ReceiptItems
+          fetchJSONP('getReceiptItems', function(resI) {
+            if (resI.status === 'success') {
+              receiptItemsData = resI.data;
+              renderReceiptItemsTable();
+            } else {
+              showAlert('danger', 'Gagal muat data ReceiptItems: ' + resI.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data Materials: ' + resM.message);
+        }
+      });
+    }
+
+    /**
+     * Tambah ReceiptItem via no-CORS POST
+     */
+    function addReceiptItemFunc() {
+      var matId   = document.getElementById('addReceiptItemMaterial').value;
+      var qty     = document.getElementById('addReceiptItemQuantity').value;
+      var price   = document.getElementById('addReceiptItemPrice').value;
+      var cond    = document.getElementById('addReceiptItemCondition').value;
+      var note    = document.getElementById('addReceiptItemNote').value.trim();
+      if (currentReceiptId && matId && qty && price && cond) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addReceiptItem',
+            payload: {
+              receipt_id: currentReceiptId,
+              material_id: matId,
+              quantity_received: parseFloat(qty),
+              price_actual: parseFloat(price),
+              condition: cond,
+              note: note
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Item berhasil ditambahkan & stok terupdate (server processing).');
+          setTimeout(loadReceiptItemsAndMaterials, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field kecuali note wajib diisi.');
+      }
+    }
+
+    /**
+     * Update ReceiptItem via no-CORS POST
+     */
+    function updateReceiptItemFunc() {
+      var id      = document.getElementById('editReceiptItemId').value;
+      var matId   = document.getElementById('editReceiptItemMaterial').value;
+      var qty     = document.getElementById('editReceiptItemQuantity').value;
+      var price   = document.getElementById('editReceiptItemPrice').value;
+      var cond    = document.getElementById('editReceiptItemCondition').value;
+      var note    = document.getElementById('editReceiptItemNote').value.trim();
+      if (id && matId && qty && price && cond) {
+        fetch(BASE_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateReceiptItem',
+            payload: {
+              id: id,
+              material_id: matId,
+              quantity_received: parseFloat(qty),
+              price_actual: parseFloat(price),
+              condition: cond,
+              note: note
+            }
+          })
+        })
+        .then(function() {
+          showAlert('success', 'Item berhasil diupdate (stok tidak disesuaikan otomatis).');
+          setTimeout(loadReceiptItemsAndMaterials, 1000);
+        })
+        .catch(function() {
+          showAlert('danger', 'Gagal mengirim data ke server.');
+        });
+      } else {
+        showAlert('warning', 'Semua field kecuali note wajib diisi.');
+      }
+    }
+
+    /**
+     * Delete ReceiptItem via no-CORS POST
+     */
+    function deleteReceiptItem(id) {
+      fetch(BASE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteReceiptItem',
+          payload: { id: id }
+        })
+      })
+      .then(function() {
+        showAlert('success', 'Item berhasil dihapus (stok tidak disesuaikan otomatis).');
+        setTimeout(loadReceiptItemsAndMaterials, 1000);
+      })
+      .catch(function() {
+        showAlert('danger', 'Gagal mengirim data ke server.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!currentReceiptId) {
+        showAlert('danger', 'Tidak ada receipt_id di URL.');
+        return;
+      }
+      loadReceiptItemsAndMaterials();
+
+      // Saat modal Add muncul, reset field
+      document.getElementById('modalAddReceiptItem').addEventListener('show.bs.modal', function() {
+        document.getElementById('addReceiptItemQuantity').value = '';
+        document.getElementById('addReceiptItemPrice').value = '';
+        document.getElementById('addReceiptItemCondition').value = 'Good';
+        document.getElementById('addReceiptItemNote').value = '';
+        populateReceiptItemMaterials();
+      });
+
+      // Form Tambah ReceiptItem
+      document.getElementById('formAddReceiptItem').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addReceiptItemFunc();
+        var addModal = bootstrap.Modal.getInstance(document.getElementById('modalAddReceiptItem'));
+        addModal.hide();
+      });
+
+      // Form Edit ReceiptItem
+      document.getElementById('formEditReceiptItem').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateReceiptItemFunc();
+        var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditReceiptItem'));
+        editModal.hide();
+      });
+    });
+  </script>
+</body>
+</html>
