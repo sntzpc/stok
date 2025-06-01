@@ -172,6 +172,21 @@
   <!-- Skrip Global -->
   <script src="../main.js"></script>
 
+  <script>
+  var userJson = localStorage.getItem('loggedInUser');
+  if (!userJson) {
+    window.location.href = 'pages/login.html';
+  }
+  // Jika hanya Admin dan Kerani yang boleh mengakses laporan:
+  var userInfo = JSON.parse(userJson);
+  var allowed = ['Admin','Kerani'];
+  if (!allowed.includes(userInfo.role)) {
+    alert('Anda tidak memiliki akses ke halaman Laporan.');
+    window.location.href = '../index.html';
+  }
+</script>
+
+
   <!-- Skrip Gabungan untuk Reports -->
   <script>
     // ----------------------------------------

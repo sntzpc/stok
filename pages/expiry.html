@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daftar Stok Kadaluarsa</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .expired-row {
+      background-color: #f8d7da;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="disposal.html">Pemusnahan</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="expiry.html">Kadaluarsa</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock-transfer.html">Transfer</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Daftar Stok Kadaluarsa</h3>
+    <hr />
+
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblExpiredOnly">
+        <thead class="table-dark">
+          <tr>
+            <th>Stock ID</th>
+            <th>Material</th>
+            <th>Lokasi</th>
+            <th>Quantity</th>
+            <th>Average Cost</th>
+            <th>Expiry Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Kadaluarsa -->
+  <script>
+    var expiredOnly = [];
+
+    /**
+     * Render tabel expired-only (read‐only)
+     */
+    function renderExpiredOnlyTable() {
+      var tbody = document.querySelector('#tblExpiredOnly tbody');
+      tbody.innerHTML = '';
+      if (expiredOnly.length === 0) {
+        var trEmpty = document.createElement('tr');
+        trEmpty.innerHTML = '<td colspan="6" class="text-center">Tidak ada stok kadaluarsa.</td>';
+        tbody.appendChild(trEmpty);
+        return;
+      }
+      expiredOnly.forEach(function(item) {
+        var tr = document.createElement('tr');
+        tr.classList.add('expired-row');
+        tr.innerHTML = `
+          <td>${item.stock_id}</td>
+          <td>${item.material_name}</td>
+          <td>${item.location_name}</td>
+          <td>${item.quantity}</td>
+          <td>${item.average_cost}</td>
+          <td>${item.expiry_date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /**
+     * Load daftar expired stock (read‐only)
+     */
+    function loadExpiredOnly() {
+      fetchJSONP('getExpiredStock', function(res) {
+        if (res.status === 'success') {
+          expiredOnly = res.data;
+          renderExpiredOnlyTable();
+        } else {
+          showAlert('danger', 'Gagal muat data stok kadaluarsa: ' + res.message);
+        }
+      });
+    }
+
+    // Pengecekan login & role (hanya Admin atau Kerani)
+    document.addEventListener('DOMContentLoaded', function() {
+      var userJson = localStorage.getItem('loggedInUser');
+      if (!userJson) {
+        window.location.href = 'pages/login.html';
+        return;
+      }
+      var userInfo = JSON.parse(userJson);
+      var allowedRoles = ['Admin','Kerani'];
+      if (!allowedRoles.includes(userInfo.role)) {
+        alert('Anda tidak memiliki akses ke halaman ini.');
+        window.location.href = 'index.html';
+        return;
+      }
+      // Muat daftar expired-only
+      loadExpiredOnly();
+    });
+  </script>
+</body>
+</html>

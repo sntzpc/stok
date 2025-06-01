@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transfer Stock</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    td select, td input {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="stock-transfer.html">Transfer</a></li>
+          <li class="nav-item"><a class="nav-link" href="expiry.html">Kadaluarsa</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Transfer Stock</h3>
+    <hr />
+
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblStockTransfer">
+        <thead class="table-dark">
+          <tr>
+            <th>Material</th>
+            <th>Lokasi Asal</th>
+            <th>Stok Asal</th>
+            <th>Lokasi Tujuan</th>
+            <th>Jumlah Transfer</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Stock Transfer -->
+  <script>
+    var allStock    = [];
+    var materials   = [];
+    var locations   = [];
+
+    /**
+     * Render tabel transfer stock:
+     * - Pilih material → filter lokasi yang memiliki stok > 0
+     * - Tampilkan stok di masing‐masing lokasi
+     * - Pilih lokasi tujuan berbeda
+     */
+    function renderTransferTable() {
+      var tbody = document.querySelector('#tblStockTransfer tbody');
+      tbody.innerHTML = '';
+      // Untuk setiap material, buat satu baris
+      materials.forEach(function(mat) {
+        // Ambil daftar lokasi dengan stok > 0 untuk material ini
+        var stockEntries = allStock.filter(s => s.material_id == mat.id && Number(s.quantity) > 0);
+        if (stockEntries.length === 0) {
+          // Jika tidak ada stok, tambahkan baris disabled
+          var trEmpty = document.createElement('tr');
+          trEmpty.innerHTML = `
+            <td>${mat.name}</td>
+            <td colspan="5" class="text-center text-muted">Tidak ada stok tersedia</td>
+          `;
+          tbody.appendChild(trEmpty);
+        } else {
+          // Kita akan membuat satu baris per entry lokasi asal
+          stockEntries.forEach(function(stk) {
+            var tr = document.createElement('tr');
+            // Dropdown lokasi asal (hanya lokasi ini, disabled)
+            var locFromName = locations.find(l => l.id == stk.location_id)?.name || '-';
+            // Dropdown lokasi tujuan (pilihan semua lokasi kecuali lokasi asal)
+            var optTo = '<option value="">-- Pilih Lokasi Tujuan --</option>';
+            locations.forEach(function(loc) {
+              if (loc.id != stk.location_id) {
+                optTo += `<option value="${loc.id}">${loc.name}</option>`;
+              }
+            });
+            tr.innerHTML = `
+              <td>${mat.name}</td>
+              <td>${locFromName}</td>
+              <td>${stk.quantity}</td>
+              <td>
+                <select class="form-select sel-to-loc" data-stock-id="${stk.stock_id}">
+                  ${optTo}
+                </select>
+              </td>
+              <td>
+                <input type="number" min="1" max="${stk.quantity}" value="1"
+                       class="form-control inp-transfer-qty" data-stock-id="${stk.stock_id}" />
+              </td>
+              <td>
+                <button class="btn btn-sm btn-success btn-transfer" data-stock-id="${stk.stock_id}" data-material-id="${mat.id}">
+                  <i class="bi bi-arrow-right-circle"></i> Transfer
+                </button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      });
+
+      // Bind tombol Transfer
+      document.querySelectorAll('.btn-transfer').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var stockId  = this.getAttribute('data-stock-id');
+          var matId    = this.getAttribute('data-material-id');
+          var selTo    = document.querySelector('.sel-to-loc[data-stock-id="' + stockId + '"]');
+          var toLoc    = selTo.value;
+          var qtyInp   = document.querySelector('.inp-transfer-qty[data-stock-id="' + stockId + '"]');
+          var qtyVal   = parseFloat(qtyInp.value) || 0;
+          if (!toLoc) {
+            showAlert('warning', 'Harap pilih lokasi tujuan.');
+            return;
+          }
+          if (!qtyVal || qtyVal <= 0) {
+            showAlert('warning', 'Jumlah transfer harus > 0.');
+            return;
+          }
+          // Temukan entry stok asal full info
+          var stk = allStock.find(s => s.stock_id === stockId);
+          if (!stk) {
+            showAlert('danger', 'Stok tidak ditemukan.');
+            return;
+          }
+          if (qtyVal > stk.quantity) {
+            showAlert('warning', 'Jumlah transfer melebihi stok asal.');
+            return;
+          }
+
+          // Ambil user_id
+          var userInfo = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
+          var userId   = userInfo.id || 'system';
+
+          // Kirim transferStock via POST no-cors
+          fetch(BASE_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'transferStock',
+              payload: {
+                material_id:       matId,
+                from_location_id:  stk.location_id,
+                to_location_id:    toLoc,
+                quantity:          qtyVal,
+                user_id:           userId
+              }
+            })
+          })
+          .then(function() {
+            showAlert('success', 'Transfer berhasil: ' + qtyVal + ' × ' + mat.name);
+            // Reload data stock setelah 1 detik
+            setTimeout(loadTransferData, 1000);
+          })
+          .catch(function() {
+            showAlert('danger', 'Gagal memicu transfer.');
+          });
+        });
+      });
+    }
+
+    /**
+     * Load semua data yang dibutuhkan: materials, locations, stock
+     */
+    function loadTransferData() {
+      // 1. GET Materials
+      fetchJSONP('getMaterials', function(resM) {
+        if (resM.status === 'success') {
+          materials = resM.data;
+          // 2. GET Locations
+          fetchJSONP('getLocations', function(resL) {
+            if (resL.status === 'success') {
+              locations = resL.data;
+              // 3. GET Stock
+              fetchJSONP('getStock', function(resS) {
+                if (resS.status === 'success') {
+                  allStock = resS.data;
+                  renderTransferTable();
+                } else {
+                  showAlert('danger', 'Gagal muat data stock: ' + resS.message);
+                }
+              });
+            } else {
+              showAlert('danger', 'Gagal muat data lokasi: ' + resL.message);
+            }
+          });
+        } else {
+          showAlert('danger', 'Gagal muat data material: ' + resM.message);
+        }
+      });
+    }
+
+    // Pengecekan login & role (hanya Admin atau Kerani)
+    document.addEventListener('DOMContentLoaded', function() {
+      var userJson = localStorage.getItem('loggedInUser');
+      if (!userJson) {
+        window.location.href = 'pages/login.html';
+        return;
+      }
+      var userInfo = JSON.parse(userJson);
+      var allowedRoles = ['Admin','Kerani'];
+      if (!allowedRoles.includes(userInfo.role)) {
+        alert('Anda tidak memiliki akses ke halaman Transfer Stock.');
+        window.location.href = 'index.html';
+        return;
+      }
+      // Muat data untuk transfer
+      loadTransferData();
+    });
+  </script>
+</body>
+</html>

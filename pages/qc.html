@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quality Control Penerimaan</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    td input, td select {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <!-- … menu … -->
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="qc.html">QC Penerimaan</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Quality Control Penerimaan</h3>
+    <hr />
+
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblQCReceipts">
+        <thead class="table-dark">
+          <tr>
+            <th>ID Receipt</th>
+            <th>Tanggal</th>
+            <th>Material</th>
+            <th>Quantity</th>
+            <th>Avg Cost</th>
+            <th>Condition</th>
+            <th>Notes</th>
+            <th>QC Status</th>
+            <th>QC Notes</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris QC akan di‐render lewat JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman QC -->
+  <script>
+    var pendingReceipts = [];
+
+    /**
+     * Render tabel QC
+     */
+    function renderQCTable() {
+      var tbody = document.querySelector('#tblQCReceipts tbody');
+      tbody.innerHTML = '';
+      if (pendingReceipts.length === 0) {
+        var trEmpty = document.createElement('tr');
+        trEmpty.innerHTML = '<td colspan="10" class="text-center">Tidak ada penerimaan yang perlu QC.</td>';
+        tbody.appendChild(trEmpty);
+        return;
+      }
+      pendingReceipts.forEach(function(rc) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${rc.id}</td>
+          <td>${rc.receipt_date}</td>
+          <td>${rc.material_name}</td>
+          <td>${rc.quantity}</td>
+          <td>${rc.average_cost}</td>
+          <td>${rc.condition}</td>
+          <td>${rc.notes}</td>
+          <td>
+            <select class="form-select sel-qc-status" data-id="${rc.id}">
+              <option value="">-- Pilih Status --</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" class="form-control inp-qc-notes" 
+                   placeholder="Catatan QC (opsional)" data-id="${rc.id}" />
+          </td>
+          <td>
+            <button class="btn btn-sm btn-primary btn-submit-qc" data-id="${rc.id}">
+              <i class="bi bi-check-lg"></i> Submit
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind tombol Submit QC
+      document.querySelectorAll('.btn-submit-qc').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var sel = document.querySelector('.sel-qc-status[data-id="' + id + '"]');
+          var status = sel.value;
+          if (!status) {
+            showAlert('warning', 'Harap pilih QC Status.');
+            return;
+          }
+          var notesInp = document.querySelector('.inp-qc-notes[data-id="' + id + '"]');
+          var qcNotes  = notesInp.value.trim();
+
+          // Ambil user_id dari localStorage
+          var userInfo = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
+          var userId   = userInfo.id || 'system';
+
+          // Kirim updateReceiptQC via POST no-cors
+          fetch(BASE_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'updateReceiptQC',
+              payload: {
+                id:        id,
+                qc_status: status,
+                qc_notes:  qcNotes,
+                user_id:   userId
+              }
+            })
+          })
+          .then(function() {
+            showAlert('success', 'QC Receipt #' + id + ' berhasil disimpan (server processing).');
+            // Reload daftar pending QC setelah 1 detik
+            setTimeout(loadPendingQC, 1000);
+          })
+          .catch(function() {
+            showAlert('danger', 'Gagal mengirim data QC.');
+          });
+        });
+      });
+    }
+
+    /**
+     * Load daftar pending receipt untuk QC
+     */
+    function loadPendingQC() {
+      fetchJSONP('getPendingReceiptsForQC', function(res) {
+        if (res.status === 'success') {
+          pendingReceipts = res.data;
+          renderQCTable();
+        } else {
+          showAlert('danger', 'Gagal muat data pending QC: ' + res.message);
+        }
+      });
+    }
+
+    // Pengecekan login (harus login untuk akses QC)
+    document.addEventListener('DOMContentLoaded', function() {
+      var userJson = localStorage.getItem('loggedInUser');
+      if (!userJson) {
+        window.location.href = 'pages/login.html';
+        return;
+      }
+      // Cek role: misalnya hanya Kerani & Admin yang boleh QC
+      var userInfo = JSON.parse(userJson);
+      var allowedRoles = ['Admin','Kerani'];
+      if (!allowedRoles.includes(userInfo.role)) {
+        alert('Anda tidak memiliki akses ke halaman QC Penerimaan.');
+        window.location.href = 'index.html';
+        return;
+      }
+      // Muat daftar pending QC
+      loadPendingQC();
+    });
+  </script>
+</body>
+</html>

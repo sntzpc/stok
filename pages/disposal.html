@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Disposal Material Kadaluarsa/Rusak</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    td input, td select {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <!-- … menu … -->
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="disposal.html">Pemusnahan</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Disposal Material Kadaluarsa / Rusak</h3>
+    <hr />
+
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblExpiredStock">
+        <thead class="table-dark">
+          <tr>
+            <th>Stock ID</th>
+            <th>Material</th>
+            <th>Lokasi</th>
+            <th>Quantity</th>
+            <th>Avg Cost</th>
+            <th>Expiry Date</th>
+            <th>Qty Disposal</th>
+            <th>Reason</th>
+            <th>Notes</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Baris expired stok akan di‐render lewat JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Disposal -->
+  <script>
+    var expiredStock = [];
+
+    /**
+     * Render tabel expired stock
+     */
+    function renderExpiredTable() {
+      var tbody = document.querySelector('#tblExpiredStock tbody');
+      tbody.innerHTML = '';
+      if (expiredStock.length === 0) {
+        var trEmpty = document.createElement('tr');
+        trEmpty.innerHTML = '<td colspan="10" class="text-center">Tidak ada stok kadaluarsa yang perlu dimusnahkan.</td>';
+        tbody.appendChild(trEmpty);
+        return;
+      }
+      expiredStock.forEach(function(item) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.stock_id}</td>
+          <td>${item.material_name}</td>
+          <td>${item.location_name}</td>
+          <td>${item.quantity}</td>
+          <td>${item.average_cost}</td>
+          <td>${item.expiry_date}</td>
+          <td>
+            <input type="number" min="1" max="${item.quantity}" 
+                   value="${item.quantity}" class="form-control inp-dispose-qty" 
+                   data-id="${item.stock_id}" />
+          </td>
+          <td>
+            <select class="form-select sel-reason" data-id="${item.stock_id}">
+              <option value="">-- Pilih Alasan --</option>
+              <option value="expired">Expired</option>
+              <option value="rusak">Rusak</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" class="form-control inp-dispose-notes" 
+                   placeholder="Catatan (opsional)" data-id="${item.stock_id}" />
+          </td>
+          <td>
+            <button class="btn btn-sm btn-danger btn-dispose" data-id="${item.stock_id}">
+              <i class="bi bi-trash"></i> Dispose
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind tombol Dispose
+      document.querySelectorAll('.btn-dispose').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var qtyInput = document.querySelector('.inp-dispose-qty[data-id="' + id + '"]');
+          var qtyVal   = parseFloat(qtyInput.value) || 0;
+          var reasonSel= document.querySelector('.sel-reason[data-id="' + id + '"]');
+          var reason   = reasonSel.value;
+          if (!reason) {
+            showAlert('warning', 'Harap pilih alasan disposal.');
+            return;
+          }
+          if (!qtyVal || qtyVal <= 0) {
+            showAlert('warning', 'Jumlah disposal harus > 0.');
+            return;
+          }
+          // Ambil stock item dari expiredStock
+          var stk = expiredStock.find(s => s.stock_id === id);
+          if (!stk) {
+            showAlert('danger', 'Stock ID tidak ditemukan.');
+            return;
+          }
+          if (qtyVal > stk.quantity) {
+            showAlert('warning', 'Jumlah disposal melebihi stok tersedia.');
+            return;
+          }
+          var notesInp = document.querySelector('.inp-dispose-notes[data-id="' + id + '"]');
+          var notesVal = notesInp.value.trim();
+
+          // Ambil user_id
+          var userInfo = JSON.parse(localStorage.getItem('loggedInUser') || '{}');
+          var userId   = userInfo.id || 'system';
+
+          // Kirim recordDisposal via POST no-cors
+          fetch(BASE_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'recordDisposal',
+              payload: {
+                stock_id:    id,
+                material_id: stk.material_id,
+                location_id: stk.location_id,
+                quantity:    qtyVal,
+                reason:      reason,
+                user_id:     userId,
+                notes:       notesVal
+              }
+            })
+          })
+          .then(function() {
+            showAlert('success', 'Material #' + stk.material_name + ' sebanyak ' + qtyVal + ' berhasil dimusnahkan.');
+            // Reload daftar expired stok setelah 1 detik
+            setTimeout(loadExpiredStock, 1000);
+          })
+          .catch(function() {
+            showAlert('danger', 'Gagal memicu disposal.');
+          });
+        });
+      });
+    }
+
+    /**
+     * Load daftar expired stock
+     */
+    function loadExpiredStock() {
+      fetchJSONP('getExpiredStock', function(res) {
+        if (res.status === 'success') {
+          expiredStock = res.data;
+          renderExpiredTable();
+        } else {
+          showAlert('danger', 'Gagal muat data expired stock: ' + res.message);
+        }
+      });
+    }
+
+    // Pengecekan login & role (hanya Admin atau Kerani)
+    document.addEventListener('DOMContentLoaded', function() {
+      var userJson = localStorage.getItem('loggedInUser');
+      if (!userJson) {
+        window.location.href = 'pages/login.html';
+        return;
+      }
+      var userInfo = JSON.parse(userJson);
+      var allowedRoles = ['Admin','Kerani'];
+      if (!allowedRoles.includes(userInfo.role)) {
+        alert('Anda tidak memiliki akses ke halaman Pemusnahan.');
+        window.location.href = 'index.html';
+        return;
+      }
+      // Muat daftar expired stock
+      loadExpiredStock();
+    });
+  </script>
+</body>
+</html>
