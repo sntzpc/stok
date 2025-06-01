@@ -130,14 +130,15 @@ function fetchJSONP(action, callback) {
   document.body.appendChild(script);
 }
 
+/**
 // Jika halaman memanggil fungsi ini, cek sesi user
 document.addEventListener('DOMContentLoaded', () => {
   // Contoh: jika bukan halaman login, langsung cek login
   if (!window.location.href.includes('login.html')) {
-    requireLogin();
+    // requireLogin();
     const user = getCurrentUser();
     if (user) {
       document.getElementById('userWelcome').innerText = `Halo, ${user.username}`;
     }
   }
-});
+});*/
