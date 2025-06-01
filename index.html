@@ -107,5 +107,15 @@
   <script src="config.js"></script>
   <!-- Skrip Global / Helper -->
   <script src="main.js"></script>
+  <script>
+  // Periksa apakah user sudah login (loggedInUser tersimpan di localStorage)
+  var userJson = localStorage.getItem('loggedInUser');
+  if (!userJson) {
+    // Jika belum login → redirect ke login.html
+    window.location.href = 'pages/login.html';
+  }
+  // Tidak perlu else: user sudah login; jika ada pengecekan role, bisa ditambahkan di masing-masing halaman.
+</script>
+
 </body>
 </html>

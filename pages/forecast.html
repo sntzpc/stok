@@ -1,0 +1,163 @@
+<!--
+  pages/forecast.html
+  Modul: Forecasting & Peramalan Kebutuhan
+  • GET via JSONP: getForecastNeeds
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forecasting & Peramalan Kebutuhan</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <!-- Kustom CSS (opsional) -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .reorder-positive {
+      color: #155724;
+      font-weight: bold;
+    }
+    .reorder-zero {
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="../index.html">Inventory SNTZ</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarContent"
+        aria-controls="navbarContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipts.html">Penerimaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="issues.html">Pengeluaran</a></li>
+          <li class="nav-item"><a class="nav-link" href="adjustments.html">Penyesuaian</a></li>
+          <li class="nav-item"><a class="nav-link" href="reports.html">Laporan</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="forecast.html">Forecast</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Forecasting & Peramalan Kebutuhan</h3>
+    <hr />
+
+    <div class="mb-3">
+      <p>
+        Tabel di bawah menunjukkan untuk setiap material:
+        <br>
+        • Konsumsi rata‐rata bulanan (6 bulan terakhir)  
+        • Forecast kebutuhan bulan depan (sama dengan rata‐rata)  
+        • Stok saat ini (total seluruh lokasi)  
+        • Rekomendasi jumlah reorder = max(0, forecast – stok_saat_ini)
+      </p>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped" id="tblForecast">
+        <thead class="table-dark">
+          <tr>
+            <th>Material</th>
+            <th>Avg Konsumsi/Bulan</th>
+            <th>Forecast Bulan Depan</th>
+            <th>Stok Saat Ini</th>
+            <th>Rekomendasi Reorder</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data akan di‐render lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <!-- Icon Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+  <!-- Konfigurasi Utama -->
+  <script src="../config.js"></script>
+  <!-- Skrip Global -->
+  <script src="../main.js"></script>
+
+  <!-- Skrip khusus halaman Forecast -->
+  <script>
+    /**
+     * Render tabel Forecasting & Peramalan Kebutuhan
+     * @param {Array} data  – array objek {
+     *   material_id,
+     *   material_name,
+     *   avg_monthly_consumption,
+     *   forecast_next_month,
+     *   current_stock,
+     *   reorder_recommendation
+     * }
+     */
+    function renderForecastTable(data) {
+      var tbody = document.querySelector('#tblForecast tbody');
+      tbody.innerHTML = '';
+      data.forEach(function(row) {
+        // Class untuk rekomendasi: jika > 0 → hijau tebal, jika 0 → abu‐abu
+        var recClass = row.reorder_recommendation > 0 ? 'reorder-positive' : 'reorder-zero';
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.material_name}</td>
+          <td>${row.avg_monthly_consumption.toLocaleString('id-ID')}</td>
+          <td>${row.forecast_next_month.toLocaleString('id-ID')}</td>
+          <td>${row.current_stock.toLocaleString('id-ID')}</td>
+          <td class="${recClass}">${row.reorder_recommendation.toLocaleString('id-ID')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (data.length === 0) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="5" class="text-center">Tidak ada data forecast</td>';
+        tbody.appendChild(tr);
+      }
+    }
+
+    /**
+     * Load data Forecast dari GAS via JSONP
+     */
+    function loadForecasts() {
+      fetchJSONP('getForecastNeeds', function(res) {
+        if (res.status === 'success') {
+          renderForecastTable(res.data);
+        } else {
+          showAlert('danger', 'Gagal muat data forecast: ' + res.message);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadForecasts();
+    });
+  </script>
+</body>
+</html>
