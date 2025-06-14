@@ -4,7 +4,7 @@
 // -------------------------------------------------------------
 
 // 1. Google Apps Script Web App URL (deploy sebagai Web App dengan akses PUBLIC)
-const BASE_URL = 'https://script.google.com/macros/s/AKfycbyRNQ0Ge99pvYrU7HPqZs1nctNz0Syt3TDK7ydQGgtxQPHsLM-QIMw7pgFt4Tp-V7Po/exec';
+const BASE_URL = 'https://script.google.com/macros/s/AKfycbzop2vc93zqjphC3nq6EHCNAypnSfWC-E7FKMb9BxgY9q9ab1k5mXBisXcurDsWz3x9eg/exec';
 
 // 2. Google Sheets API Key (hanya untuk GET data)
 const GOOGLE_API_KEY = 'AIzaSyBf3LLK72GTjY-m4Wzh8vd0BBIujgyH5t0';

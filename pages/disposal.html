@@ -33,8 +33,12 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <!-- … menu … -->
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock-transfer.html">Transfer</a></li>
+          <li class="nav-item"><a class="nav-link" href="expiry.html">Kadaluarsa</a></li>
           <li class="nav-item"><a class="nav-link active" aria-current="page" href="disposal.html">Pemusnahan</a></li>
+          <li class="nav-item"><a class="nav-link" href="adjustment.html">Penyesuaian</a></li>
         </ul>
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
@@ -207,6 +211,7 @@
       });
     }
 
+    /**
     // Pengecekan login & role (hanya Admin atau Kerani)
     document.addEventListener('DOMContentLoaded', function() {
       var userJson = localStorage.getItem('loggedInUser');
@@ -223,7 +228,8 @@
       }
       // Muat daftar expired stock
       loadExpiredStock();
-    });
+    }); */
+
   </script>
 </body>
 </html>

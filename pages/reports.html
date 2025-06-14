@@ -51,11 +51,6 @@
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="master-categories.html">Master Kategori</a></li>
-          <li class="nav-item"><a class="nav-link" href="master-units.html">Master Unit</a></li>
-          <li class="nav-item"><a class="nav-link" href="master-locations.html">Master Lokasi</a></li>
-          <li class="nav-item"><a class="nav-link" href="master-materials.html">Master Material</a></li>
-          <li class="nav-item"><a class="nav-link" href="master-pricedata.html">Master PriceData</a></li>
           <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
           <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
           <li class="nav-item"><a class="nav-link" href="requests.html">Permintaan</a></li>
@@ -63,6 +58,8 @@
           <li class="nav-item"><a class="nav-link" href="issues.html">Pengeluaran</a></li>
           <li class="nav-item"><a class="nav-link" href="adjustments.html">Penyesuaian</a></li>
           <li class="nav-item"><a class="nav-link active" aria-current="page" href="reports.html">Laporan</a></li>
+          <li class="nav-item"><a class="nav-link" href="forecast.html">Forecast</a></li>
+          <li class="nav-item"><a class="nav-link" href="backup.html">Backup</a></li>
         </ul>
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
@@ -173,6 +170,7 @@
   <script src="../main.js"></script>
 
   <script>
+     /**
   var userJson = localStorage.getItem('loggedInUser');
   if (!userJson) {
     window.location.href = 'pages/login.html';
@@ -183,12 +181,9 @@
   if (!allowed.includes(userInfo.role)) {
     alert('Anda tidak memiliki akses ke halaman Laporan.');
     window.location.href = '../index.html';
-  }
-</script>
-
+  }*/
 
   <!-- Skrip Gabungan untuk Reports -->
-  <script>
     // ----------------------------------------
     // Bagian A: Data Requests & RequestItems
     // ----------------------------------------

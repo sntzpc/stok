@@ -33,7 +33,9 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <!-- … menu … -->
+          <li class="nav-item"><a class="nav-link" href="../index.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipts.html">Penerimaan</a></li>
+          <li class="nav-item"><a class="nav-link" href="receipt-items.html">Items</a></li>
           <li class="nav-item"><a class="nav-link active" aria-current="page" href="qc.html">QC Penerimaan</a></li>
         </ul>
         <ul class="navbar-nav ms-auto">
@@ -183,6 +185,7 @@
       });
     }
 
+    /**
     // Pengecekan login (harus login untuk akses QC)
     document.addEventListener('DOMContentLoaded', function() {
       var userJson = localStorage.getItem('loggedInUser');
@@ -200,7 +203,7 @@
       }
       // Muat daftar pending QC
       loadPendingQC();
-    });
+    }); */
   </script>
 </body>
 </html>
